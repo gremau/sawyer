@@ -1,8 +1,17 @@
-# ecoflux_tools
+# datalog
 
-WIP!
+The `datalog` python package helps users manage and quality assure incoming time-series data files. The package is built for environmental sensor networks that have one or more dataloggers that periodically return files containing continuous data to a specified directory. File management and quality assurance steps are defined using a set of YAML configuration files.
 
-This is a collection of tools written in python and R that can be used for calculating ecosystem fluxes (CO2, H2O, etc), unit and measurement conversions, and various statistics (uncertainty, etc) with environmental data. These have been collected and adapted from various sources and all operations should have appropriate references.
+WARNING: Documentation here is still being built, so this may be challenging to use. Feel free to send me questions or suggestions...
+
+## Incoming data expectations
+
+### Datalogger file naming
+
+### Sites, dataloggers, and sensor replication
+
+
+
 
 ## Classes:
 
