@@ -11,7 +11,7 @@ import subprocess as sp
 import yaml
 import os
 import shutil
-import ecoflux.config as conf
+import datalog.config as conf
 import pdb
 
 qa_path = conf.qadata_path
@@ -82,9 +82,9 @@ def most_recent_filematch(sitename, datapath, ext='.dat', optmatch=None):
     return files[dates.index(max(dates))], max(dates)
     
 
-def read_project_conf(confdir='ecoflux_config'):
+def read_project_conf(confdir='datalog_config'):
     """
-    Read the project YAML configuration file from the ecoflux
+    Read the project YAML configuration file from the datalog
     configuration directory.
 
     Args:
@@ -94,15 +94,15 @@ def read_project_conf(confdir='ecoflux_config'):
         yamlf (dict): Returns a dictionary of configuration values
                       from the YAML file
     """
-    yamlfile = os.path.join(confdir, 'ecoflux_conf.yaml')
+    yamlfile = os.path.join(confdir, 'datalog_conf.yaml')
     stream = open(yamlfile, 'r')
     yamlf = yaml.load(stream)
     return yamlf
 
 
-def read_yaml_conf(sitename, yamltype, confdir='ecoflux_config'):
+def read_yaml_conf(sitename, yamltype, confdir='datalog_config'):
     """
-    Read a specified YAML configuration file from a given site's ecoflux
+    Read a specified YAML configuration file from a given site's datalog
     configuration directory. Checks the YAML file meta dictionary to ensure
     configuration is for the correct site and type.
 
@@ -240,7 +240,7 @@ def site_datafile_concat(sitename, datapath, setfreq='10min',iofunc=load_toa5):
     return sitedf, collect_dt
 
 
-def rename_raw_variables(sitename, rawpath, rnpath, confdir='ecoflux_config'):
+def rename_raw_variables(sitename, rawpath, rnpath, confdir='datalog_config'):
     """
     Rename raw datalogger variables according to YAML configuration file
 
@@ -286,7 +286,7 @@ def rename_raw_variables(sitename, rawpath, rnpath, confdir='ecoflux_config'):
             shutil.copy(os.path.join(rawpath, filename), rnpath)
 
 
-def ecoflux_out(df, sitename, outpath, datestamp=None,
+def datalog_out(df, sitename, outpath, datestamp=None,
         prefix=None, suffix='00'):
     """
     Write a delimited text file with a metadata header.
@@ -301,13 +301,13 @@ def ecoflux_out(df, sitename, outpath, datestamp=None,
     outfile = os.path.join(outpath,
             '_'.join(filter(None, strlist)) + '.txt')
     # Get name of currently running script and git SHA for metadata
-    import __main__ as main # "main.__file__" names script calling ecoflux_out
+    import __main__ as main # "main.__file__" names script calling datalog_out
     git_sha = sp.check_output(
             ['git', 'rev-parse', 'HEAD']).decode('ascii').strip()
     # Write metadata block
     meta_data = pd.Series([('location: {0}'.format(sitename)),
         ('date generated: {0}'.format(str(dt.datetime.now()))),
-        ('writer: ecoflux.iodat.ecoflux_out'),
+        ('writer: datalog.iodat.datalog_out'),
         ('writer HEAD SHA: {0}'.format(git_sha)),
         ('called from: {0}'.format(main.__file__)),
         ('-------------------')])
@@ -316,9 +316,9 @@ def ecoflux_out(df, sitename, outpath, datestamp=None,
         meta_data.to_csv(fout, index=False)
         df.to_csv(fout, na_rep='NA')
 
-def ecoflux_in(filename, sitename=None):
+def datalog_in(filename, sitename=None):
     """
-    Read an ecoflux delimited text file with a metadata header.
+    Read an datalog delimited text file with a metadata header.
     """
     print('Opening ' + filename)
     with open(filename) as myfile:

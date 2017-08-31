@@ -2,9 +2,9 @@ import os
 import yaml
 
 # Get the project configuration
-yamlfile = os.path.join("ecoflux_config", "ecoflux_conf.yaml")
+yamlfile = os.path.join("datalog_config", "datalog_conf.yaml")
 if os.path.isfile(yamlfile):
-    print("Loading ecoflux configuration file {0}".format(yamlfile))
+    print("Loading datalog configuration file {0}".format(yamlfile))
     stream = open(yamlfile, 'r')
     conf = yaml.load(stream)
 else:
@@ -26,10 +26,10 @@ rawdata_backup_path = os.path.join(base_path,
         conf['paths']['rawdata_backup'])
 qadata_path = os.path.join(base_path,
         conf['paths']['qadata'])
-ecoflux_py_path = os.path.join(base_path,
-        conf['paths']['ecoflux_py'])
+datalog_py_path = os.path.join(base_path,
+        conf['paths']['datalog_py'])
 
-# Get name and subdirectory for ecoflux data types
+# Get name and subdirectory for datalog data types
 datasubdirs = {'rawdata_incoming':'',  
     'rawdata_backup': 'raw_bak/',
     'rawdata_standardized': 'raw_std/',

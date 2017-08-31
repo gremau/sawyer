@@ -64,11 +64,11 @@ def gapfill_series(s_withgaps, s_gapfiller, makeplots=False):
 
     return s_filled
 
-def resample_ecoflux_met( df, freq='1D', avg_cols=[ 'TA_F'],
+def resample_datalog_met( df, freq='1D', avg_cols=[ 'TA_F'],
         min_cols=[ 'TA_F', 'VPD_F' ], max_cols=['LE_F', 'H_F'],
         sum_cols=[ 'P_F' ]):
     """
-    Resample an ecoflux dataframe to daily frequency.
+    Resample an datalog dataframe to daily frequency.
 
     Args:
         df          : pandas DataFrame object (usually derived from AF file)

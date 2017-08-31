@@ -8,7 +8,7 @@ QA functions that can be applied are called from the qafunctions module.
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from ecoflux import qafunctions
+from datalog import qafunctions
 #import pdb
 
 
@@ -37,7 +37,7 @@ def apply_qa_flags(df, flags):
 
     Args:
         df      : input dataframe
-        flags   : qa_flag dictionary from the site's ecoflux configuration dir
+        flags   : qa_flag dictionary from the site's datalog configuration dir
     Returns:
         Three pandas dataframes with identical dimensions to the input df
         df_new  : original data with any qa transformations applied
@@ -89,7 +89,7 @@ def qa_dataframes(df, flags):
 
     Args:
         df: input dataframe
-        flags: qa_flag dictionary from the site's ecoflux configuration dir
+        flags: qa_flag dictionary from the site's datalog configuration dir
     Returns:
         df_qa       : QA'd dataframe with flags appended
         df_qa_masked: QA'd dataframe with flags appended and mask applied
