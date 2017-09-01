@@ -1,5 +1,6 @@
 import os
 import yaml
+import pdb
 
 # Get the project configuration
 yamlfile = os.path.join("datalog_config", "datalog_conf.yaml")
@@ -7,8 +8,14 @@ if os.path.isfile(yamlfile):
     print("Loading datalog configuration file {0}".format(yamlfile))
     stream = open(yamlfile, 'r')
     conf = yaml.load(stream)
+elif os.path.isfile(os.path.join('..', yamlfile)):
+    yamlfile = os.path.join('..', yamlfile)
+    print("Loading datalog configuration file {0}".format(yamlfile))
+    stream = open(yamlfile, 'r')
+    conf = yaml.load(stream)
 else:
-    raise ValueError('Project YAML file missing from default location')
+    raise ValueError('Project configuration directory not in current or parent'
+            ' directory')
 
 # Project name
 projectname = conf['projectname']
