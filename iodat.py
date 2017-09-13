@@ -254,6 +254,8 @@ def rename_raw_variables(sitename, rawpath, rnpath, confdir=conf_path):
     Returns:
         Does not return anything but writes new files in rnpath
     """
+    import re
+    
     # Get var_rename configuration file for site
     yamlf = read_yaml_conf(sitename, 'var_rename', confdir=confdir)
     # Get list of files and their collection dates from the raw directory
@@ -261,22 +263,23 @@ def rename_raw_variables(sitename, rawpath, rnpath, confdir=conf_path):
     if bool(yamlf):
         # For each file, loop through each rename event and change headers
         for i, filename in enumerate(files):
-            findvars, newvars = ([],[])
-            # For each rename event, add variable changes to findvar/newvar
+            findvars, repvars = ([],[])
+            # For each rename event, add variable changes to findvar/repvar
             # if the changes occurred after the file collection date
             for j, key in enumerate(sorted(yamlf.keys())):
                 rn = yamlf[key] # Get rename event j
                 if rn["first_changed_dt"] > collected[i]:
                     findvars = findvars + rn["from"]
-                    newvars = newvars + rn["to"]
+                    repvars = repvars + rn["to"]
 
             # Now read in file, replace target strings, write a new file
             filepath = os.path.join(rawpath, filename)
             with open(filepath, 'r') as file:
                 filedata = file.read()
             for k, findvar in enumerate(findvars):
-                newvar = newvars[k]
-                filedata = filedata.replace(findvar, newvar)
+                repvar = repvars[k]
+                #filedata = filedata.replace(findvar, repvar)
+                filedata = re.sub(findvar, repvar, filedata)
             rn_filepath = os.path.join(rnpath, filename)
             with open(rn_filepath, 'w') as file:
                 file.write(filedata)
