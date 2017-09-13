@@ -25,7 +25,7 @@ def mc_met1_tsfig(df, sitename, colldates):
     ax[0].set_ylabel('Tair ($^\circ$C)')
     ax[0].legend(fontsize=10, loc='best')
     # RH
-    ax[1].plot(df.index, df.RH, color='b', lw=1.25)
+    ax[1].plot(df.index, df.RH_Avg, color='b', lw=1.25)
     ax[1].set_ylabel('RH (%)')
     # PAR
     ax[2].plot(df.index, df.PPFD_Up_umol_Avg, color='r', lw=1.25)
