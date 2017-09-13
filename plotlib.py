@@ -9,6 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import datalog.dtools as dtool
+import pdb
 
 def mc_met1_tsfig(df, sitename, colldates):
     """
@@ -83,7 +84,7 @@ def mc_power_tsfig(df, sitename):
     return fig
 
 
-def meas_profile_tsfig(df, sitename, var, ylabel, ylimit=None):
+def meas_profile_tsfig(df, sitename, var, ylabel, varsuffix='', ylimit=None):
     """
     Make a time series plot for sensors in a measurement profile
     """
@@ -97,7 +98,7 @@ def meas_profile_tsfig(df, sitename, var, ylabel, ylimit=None):
     # Loop through each profile and depth and plot
     for i, pnum in enumerate(sorted(measdict.keys())):
         for d in measdict[pnum]:
-            colname = pnum + '_' + d + '_Avg'
+            colname = pnum + '_' + d + varsuffix
             ax[i].plot( df.index, df[colname], lw=1.25, label=str(d)+'cm' )
         ax[i].legend(loc='upper left', bbox_to_anchor=(0, 1.05),
                 ncol=4, fontsize=10)
@@ -107,7 +108,8 @@ def meas_profile_tsfig(df, sitename, var, ylabel, ylimit=None):
         ax[i].set_ylabel(ylabel)
     return fig
 
-def meas_profile_scatterfig(df, sitename, var, ylabel, ylimit=[-155,0]):
+def meas_profile_scatterfig(df, sitename, var, ylabel, varsuffix='',
+        ylimit=[-155,0]):
     """
     Make a scatterplot for sensors in a measurement profile
     """
@@ -121,7 +123,7 @@ def meas_profile_scatterfig(df, sitename, var, ylabel, ylimit=[-155,0]):
     # Loop through each profile and depth and plot againt depth
     for i, pnum in enumerate(sorted(measdict.keys())):
         for d in measdict[pnum]:
-            colname = pnum + '_' + d + '_Avg'
+            colname = pnum + '_' + d + varsuffix
             ax[i].plot(df[colname],np.tile(-int(d), [len(df), 1]),
                     marker='o', ls='None', label=str(d)+'cm' )
         ax[i].set_title('Profile ' + pnum)
