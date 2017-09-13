@@ -14,6 +14,7 @@ import shutil
 import datalog.config as conf
 import pdb
 
+conf_path = conf.config_path
 qa_path = conf.qadata_path
 raw_incoming_path = conf.rawdata_incoming_path
 raw_backup_path = conf.rawdata_backup_path
@@ -82,7 +83,7 @@ def most_recent_filematch(sitename, datapath, ext='.dat', optmatch=None):
     return files[dates.index(max(dates))], max(dates)
     
 
-def read_project_conf(confdir='datalog_config'):
+def read_project_conf(confdir=conf_path):
     """
     Read the project YAML configuration file from the datalog
     configuration directory.
@@ -100,7 +101,7 @@ def read_project_conf(confdir='datalog_config'):
     return yamlf
 
 
-def read_yaml_conf(sitename, yamltype, confdir='datalog_config'):
+def read_yaml_conf(sitename, yamltype, confdir=conf_path):
     """
     Read a specified YAML configuration file from a given site's datalog
     configuration directory. Checks the YAML file meta dictionary to ensure
@@ -240,7 +241,7 @@ def site_datafile_concat(sitename, datapath, setfreq='10min',iofunc=load_toa5):
     return sitedf, collect_dt
 
 
-def rename_raw_variables(sitename, rawpath, rnpath, confdir='datalog_config'):
+def rename_raw_variables(sitename, rawpath, rnpath, confdir=conf_path):
     """
     Rename raw datalogger variables according to YAML configuration file
 
@@ -261,7 +262,7 @@ def rename_raw_variables(sitename, rawpath, rnpath, confdir='datalog_config'):
         # For each file, loop through each rename event and change headers
         for i, filename in enumerate(files):
             findvars, newvars = ([],[])
-            # For each rename event, add variable changes to findvar/repvar
+            # For each rename event, add variable changes to findvar/newvar
             # if the changes occurred after the file collection date
             for j, key in enumerate(sorted(yamlf.keys())):
                 rn = yamlf[key] # Get rename event j
