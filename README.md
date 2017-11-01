@@ -2,6 +2,8 @@
 
 The `datalog` python package helps users manage and quality assure incoming time-series data files. The package is built for environmental sensor networks that have one or more dataloggers that periodically return files containing continuous data to a specified directory. File management and quality assurance steps are defined using a set of YAML configuration files.
 
+Requires pandas (which brings in NumPy) and pyYAML packages. Matplotlib should be installed to use the plotting functions.
+
 WARNING: Documentation here is still being built, so this may be challenging to use. Feel free to send me questions or suggestions...
 
 ## Incoming data expectations
