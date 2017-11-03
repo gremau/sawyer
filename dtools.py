@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import pdb
 
 def measurement_h_v_dict(cols, meas, str_exclude=None):
     '''
@@ -24,7 +25,9 @@ def measurement_h_v_dict(cols, meas, str_exclude=None):
     else:
         meas_cols = [c for c in cols if meas + '_' in c]
     horiz = [n.split('_')[1 + meas_uscores] for n in meas_cols]
-    vert = [n.split('_')[2 + meas_uscores] for n in meas_cols]
+    # Max split preserves suffix
+    vert = [n.split('_', maxsplit=2+meas_uscores)[2+meas_uscores]
+            for n in meas_cols]
     # Create dictionary - meas_H = keys, V = values
     hv_dict = {meas + '_' + p:[] for p in set(horiz)}
     for i, pnum in enumerate(horiz):

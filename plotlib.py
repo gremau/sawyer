@@ -84,12 +84,13 @@ def mc_power_tsfig(df, sitename):
     return fig
 
 
-def meas_profile_tsfig(df, sitename, var, ylabel, varsuffix='', ylimit=None):
+def meas_profile_tsfig(df, sitename, var, ylabel, strexclude=None, ylimit=None):
     """
     Make a time series plot for sensors in a measurement profile
     """
     # Get measurement dictionary
-    measdict = dtool.measurement_h_v_dict(df.columns, var)
+    measdict = dtool.measurement_h_v_dict(df.columns, var,
+            str_exclude=strexclude)
     nplots = len(measdict.keys())
     # Set up plot
     fig, ax = plt.subplots(nplots, figsize=(11.5, 8), sharex=True)
@@ -98,7 +99,7 @@ def meas_profile_tsfig(df, sitename, var, ylabel, varsuffix='', ylimit=None):
     # Loop through each profile and depth and plot
     for i, pnum in enumerate(sorted(measdict.keys())):
         for d in measdict[pnum]:
-            colname = pnum + '_' + d + varsuffix
+            colname = pnum + '_' + d
             ax[i].plot( df.index, df[colname], lw=1.25, label=str(d)+'cm' )
         ax[i].legend(loc='upper left', bbox_to_anchor=(0, 1.05),
                 ncol=4, fontsize=10)
@@ -108,13 +109,14 @@ def meas_profile_tsfig(df, sitename, var, ylabel, varsuffix='', ylimit=None):
         ax[i].set_ylabel(ylabel)
     return fig
 
-def meas_profile_scatterfig(df, sitename, var, ylabel, varsuffix='',
+def meas_profile_scatterfig(df, sitename, var, ylabel, strexclude=None,
         ylimit=[-155,0]):
     """
     Make a scatterplot for sensors in a measurement profile
     """
     # Get measurement dictionary
-    measdict = dtool.measurement_h_v_dict(df.columns, var)
+    measdict = dtool.measurement_h_v_dict(df.columns, var,
+            str_exclude=strexclude)
     nplots = len(measdict.keys())
     # Set up plot
     fig, ax = plt.subplots(1, nplots, figsize=(7, 5), sharey=True)
@@ -123,9 +125,10 @@ def meas_profile_scatterfig(df, sitename, var, ylabel, varsuffix='',
     # Loop through each profile and depth and plot againt depth
     for i, pnum in enumerate(sorted(measdict.keys())):
         for d in measdict[pnum]:
-            colname = pnum + '_' + d + varsuffix
-            ax[i].plot(df[colname],np.tile(-int(d), [len(df), 1]),
-                    marker='o', ls='None', label=str(d)+'cm' )
+            depth = d.split('_')[0]
+            colname = pnum + '_' + d
+            ax[i].plot(df[colname],np.tile(-int(depth), [len(df), 1]),
+                    marker='o', ls='None', label=str(depth)+'cm' )
         ax[i].set_title('Profile ' + pnum)
         ax[i].set_ylim(ylimit)
         ax[i].set_xlabel(ylabel)
