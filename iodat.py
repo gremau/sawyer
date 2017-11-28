@@ -55,6 +55,8 @@ def get_file_collection(sitename, datapath, ext='.dat', optmatch=None):
     # Get a list of filenames in provided data directory
     files = os.listdir(datapath)
     # Select desired files from the list (by site)
+    # This could easily fail if other parts of filename contain the 
+    # site or extension name
     site_files = [f for f in files if sitename in f and ext in f ]
     # Match optional strings if given
     if isinstance(optmatch, str): # optmatch must be a list
@@ -189,9 +191,10 @@ def load_toa5(fpathname, reindex=False) :
     return parsed_df_ret
 
 
-def site_datafile_concat(sitename, datapath, setfreq='10min',iofunc=load_toa5):
+def site_raw_concat(sitename, datapath, setfreq='10min', ext='.dat',
+        optmatch=None, iofunc=load_toa5):
     """
-    Load a list of datalogger files, append them, and then return a pandas
+    Load a list of raw datalogger files, append them, and then return a pandas
     DataFrame object. Also returns a list of collection dates. 
 
     Note that files don't load in chronological order, so the resulting 
@@ -212,8 +215,9 @@ def site_datafile_concat(sitename, datapath, setfreq='10min',iofunc=load_toa5):
                       (data collection date)
     """
             
-    # Get list of files and thier collection dates from the provided directory
-    files, collect_dt = get_file_collection(sitename, datapath)
+    # Get list of datalogger files and collection dates from directory
+    files, collect_dt = get_file_collection(sitename, datapath, ext=ext,
+            optmatch=optmatch)
     # Initialize DataFrame
     sitedf = pd.DataFrame()
     # Loop through each year and fill the dataframe
