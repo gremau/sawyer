@@ -11,7 +11,7 @@ import numpy as np
 import datalog.dtools as dtool
 import pdb
 
-def mc_met1_tsfig(df, sitename, colldates):
+def mc_met1_tsfig(df, sitename, filedates):
     """
     Air temp, humidity, PAR, precip
     """
@@ -136,10 +136,10 @@ def meas_profile_scatterfig(df, sitename, var, ylabel, strexclude=None,
             ax[i].set_ylabel('Depth (cm)')
     return fig
 
-def tsfig_add_colldates(fig, colldates):
+def tsfig_add_filedates(fig, filedates):
     for a in fig.axes:
         ymin, ymax = a.get_ylim()
-        a.vlines(colldates, ymin, ymax, linestyles='dotted',lw=0.5)
+        a.vlines(filedates, ymin, ymax, linestyles='dotted',lw=0.5)
 
 def plot_qa_var( varname, df, df_qa, df_qa_masked):
     """

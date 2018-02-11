@@ -39,14 +39,14 @@ def site_datadir(sitename, datadir='quality_assured'):
 
 def get_file_collection(sitename, datapath, ext='.dat', optmatch=None):
     """
-    Read a list of files from a data directory, match against desired site,
-    and return the list and the collection dates of each file. This function
+    Read a list of filenames from a data directory, match against desired site,
+    and return the list and the file datestamps of each file. This function
     expects to find a directory full of files with the format 
     "prefix_<sitename>_<Y>_<m>_<d>_<H>_<M>_optionalsuffix.dat". For example:
 
     MNPclimoseq_Creosote_2017_03_17_11_55_00.dat
 
-    Only returns files matching the sitename and extension (.dat by 
+    Only returns filenames matching the sitename and extension (.dat by 
     default) strings.
 
     If a list of strings in optmatch is given, additional strings can be
@@ -54,7 +54,7 @@ def get_file_collection(sitename, datapath, ext='.dat', optmatch=None):
     """
     # Get a list of filenames in provided data directory
     files = os.listdir(datapath)
-    # Select desired files from the list (by site)
+    # Select desired filenames from the list (by site)
     # This could easily fail if other parts of filename contain the 
     # site or extension name
     site_files = [f for f in files if sitename in f and ext in f ]
@@ -65,14 +65,14 @@ def get_file_collection(sitename, datapath, ext='.dat', optmatch=None):
         for m in optmatch:
             site_files = [f for f in files if m in f]
     
-    # Get collection date for each file. The collection date is in the 
+    # Get file date for each file. The file datestamp is in the 
     # filename with fields delimited by '_'
-    collect_dt = []
+    file_dt = []
     for i in site_files:
         tokens = i.split('_')
-        collect_dt.append(dt.datetime.strptime('-'.join(tokens[-6:-1]),
+        file_dt.append(dt.datetime.strptime('-'.join(tokens[-6:-1]),
             '%Y-%m-%d-%H-%M'))
-    return site_files, collect_dt
+    return site_files, file_dt
 
 
 def most_recent_filematch(sitename, datapath, ext='.dat', optmatch=None):
@@ -195,7 +195,7 @@ def site_raw_concat(sitename, datapath, setfreq='10min', ext='.dat',
         optmatch=None, iofunc=load_toa5):
     """
     Load a list of raw datalogger files, append them, and then return a pandas
-    DataFrame object. Also returns a list of collection dates. 
+    DataFrame object. Also returns a list of file datestamps. 
 
     Note that files don't load in chronological order, so the resulting 
     dataframe is reindexed based on the min/max dates in the indices. This 
@@ -211,12 +211,12 @@ def site_raw_concat(sitename, datapath, setfreq='10min', ext='.dat',
     Returns:
         sitedf  : pandas DataFrame containing concatenated raw data
                       from one site
-        collect_dt: list of datetime objects parsed from the filenames 
-                      (data collection date)
+        file_dt : list of datetime objects parsed from the filenames 
+                      (file datestamp)
     """
             
-    # Get list of datalogger files and collection dates from directory
-    files, collect_dt = get_file_collection(sitename, datapath, ext=ext,
+    # Get list of datalogger filenames and file datestamps from directory
+    files, file_dt = get_file_collection(sitename, datapath, ext=ext,
             optmatch=optmatch)
     # Initialize DataFrame
     sitedf = pd.DataFrame()
@@ -242,7 +242,7 @@ def site_raw_concat(sitename, datapath, setfreq='10min', ext='.dat',
     # Now reindex the dataframe
     print("Reindexing dataframe...")
     sitedf = sitedf.reindex( fullidx )
-    return sitedf, collect_dt
+    return sitedf, file_dt
 
 
 def rename_raw_variables(sitename, rawpath, rnpath, confdir=conf_path):
@@ -262,17 +262,17 @@ def rename_raw_variables(sitename, rawpath, rnpath, confdir=conf_path):
     
     # Get var_rename configuration file for site
     yamlf = read_yaml_conf(sitename, 'var_rename', confdir=confdir)
-    # Get list of files and their collection dates from the raw directory
-    files, collected = get_file_collection(sitename, rawpath)
+    # Get list of filenames and their file datestamps from the raw directory
+    files, file_dt = get_file_collection(sitename, rawpath)
     if bool(yamlf):
         # For each file, loop through each rename event and change headers
         for i, filename in enumerate(files):
             findvars, repvars = ([],[])
             # For each rename event, add variable changes to findvar/repvar
-            # if the changes occurred after the file collection date
+            # if the changes occurred after the file datestamp
             for j, key in enumerate(sorted(yamlf.keys())):
                 rn = yamlf[key] # Get rename event j
-                if rn["first_changed_dt"] > collected[i]:
+                if rn["first_changed_dt"] > file_dt[i]:
                     findvars = findvars + rn["from"]
                     repvars = repvars + rn["to"]
 
