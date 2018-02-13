@@ -141,25 +141,24 @@ def tsfig_add_filedates(fig, filedates):
         ymin, ymax = a.get_ylim()
         a.vlines(filedates, ymin, ymax, linestyles='dotted',lw=0.5)
 
-def plot_qa_var( varname, df, df_qa, df_qa_masked):
+def qa_var_tsplot(ax, varname, df, df_qa, df_qa_masked):
     """
     Plot a variable showing what has been modified in the qa process
     """
     varname_f = varname + '_flag'
-    fig1 = plt.figure(figsize=( 10.5, 4.5 ),
-            dpi=150, facecolor='w', edgecolor='k')
     # Plot original data and overlay qa data
-    plt.plot(df.index, df[varname], marker= '.', ls='none', color = '0.75',
+    ax.plot(df.index, df[varname], marker= '.', ls='none', color = '0.75',
             label='Raw file data')
-    plt.plot(df_qa.index, df_qa[varname], '.k', label='QA file data')
+    ax.plot(df_qa.index, df_qa[varname], '.k', label='QA file data')
     # If there is a shift between them circle it
     test_qa = df[varname] != df_qa[varname]
-    plt.plot(df_qa.index[test_qa], df_qa[varname][test_qa], 'og', mfc='none',
+    ax.plot(df_qa.index[test_qa], df_qa[varname][test_qa], 'og', mfc='none',
             mew='0.3', alpha=.5, label='QA shifted values')
     # Plot the removed data in red
     test_mask = df_qa_masked[varname] != df_qa[varname]
-    plt.plot(df_qa.index[test_mask], df_qa[varname][test_mask], '.r',
+    ax.plot(df_qa.index[test_mask], df_qa[varname][test_mask], '.r',
             label='Masked values')
-    plt.legend()
+    ax.set_ylabel(varname)
+    #ax.legend()
 
-    return fig1 
+    return ax
