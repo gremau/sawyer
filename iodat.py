@@ -122,7 +122,10 @@ def read_yaml_conf(sitename, yamltype, confdir=conf_path):
         ValueError: Raises ValueError if the sitename or yamltype parameters
                     do not match those found in the yaml file
     """
-    yamlfile = os.path.join(confdir, sitename, yamltype + '.yaml')
+    if sitename is 'all':
+        yamlfile = os.path.join(confdir, yamltype + '.yaml')
+    else:
+        yamlfile = os.path.join(confdir, sitename, yamltype + '.yaml')
     if os.path.isfile(yamlfile):
         stream = open(yamlfile, 'r')
         yamlf = yaml.load(stream)

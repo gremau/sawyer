@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from datalog import qafunctions
-#import pdb
+import pdb
 
 
 def get_qafunction(flag):
@@ -52,7 +52,7 @@ def apply_qa_flags(df, flags):
     df_flag = pd.DataFrame(0, index=df.index, columns=df.columns)
     # Loop through qa flags
     for i in flags.keys():
-        if i == 0:
+        if i in (0, '0'):
             raise ValueError('QA flag key cannot be zero (0)!')
         flag_cols_in = flags[i]['columns']
         st = flags[i]['start']
@@ -75,7 +75,7 @@ def apply_qa_flags(df, flags):
         # Get the mask for flag i and set appropriate flag
         df_new, mask_i, rm = qafunc(df_new, idxrange, colrange, *qaargs)
         # Add mask_i to df_flag and to df_mask if data are to be masked
-        df_flag[mask_i] = i
+        df_flag = df_flag.where(mask_i, other=i)
         if rm:
             df_mask = np.logical_or(df_mask, mask_i)
 
