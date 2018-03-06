@@ -15,9 +15,9 @@ import datalog.config as conf
 import pdb
 
 conf_path = conf.config_path
-qa_path = conf.qadata_path
-raw_incoming_path = conf.rawdata_incoming_path
-raw_backup_path = conf.rawdata_backup_path
+qa_path = conf.qa_path
+raw_incoming_path = conf.raw_in_path
+raw_backup_path = conf.raw_bak_path
 
 datadirs = conf.datadirs
 datasubdirs = conf.datasubdirs

@@ -28,24 +28,26 @@ if conf_flag:
     print('Configuration for project {0}'.format(projectname))
     print('Using configuration files in {0}'.format(config_path))
 
+    pdb.set_trace()
     # Get valid paths from configuration
     # NOTE - If base_path is unset in conf, all other paths must be complete
-    base_path = projconf['paths']['base']
+    base_path = projconf['base_path']
 
     #config_path_user = os.path.join(base_path,
     #        projconf['paths']['config'])
-    rawdata_incoming_path = os.path.join(base_path,
-            projconf['paths']['rawdata_incoming'])
-    rawdata_backup_path = os.path.join(base_path,
-            projconf['paths']['rawdata_backup'])
-    qadata_path = os.path.join(base_path,
-            projconf['paths']['qadata'])
+    raw_in_path = os.path.join(base_path,
+            projconf['default_data_paths']['raw_in'])
+    raw_bak_path = os.path.join(base_path,
+            projconf['default_data_paths']['raw_bak'])
+    qa_path = os.path.join(base_path,
+            projconf['default_data_paths']['qa'])
+    
     datalog_py_path = os.path.join(base_path,
-            projconf['paths']['datalog_py'])
+            projconf['datalog_py'])
 
     # Site metadata file
     sitedata_file = os.path.join(base_path,
-            projconf['files']['sitedata'])
+            projconf['site_metadata'])
 
     # Get name and subdirectory for datalog data types
     datasubdirs = {'rawdata_incoming':'',  
@@ -62,8 +64,8 @@ if conf_flag:
 else:
     print('Project configs not loaded!')
     config_path=''
-    qadata_path=''
-    rawdata_incoming_path=''
-    rawdata_backup_path=''
+    qa_path=''
+    raw_in_path=''
+    raw_bak_path=''
     datadirs=''
     datasubdirs=''
