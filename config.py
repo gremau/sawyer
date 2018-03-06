@@ -22,32 +22,32 @@ if conf_flag:
     yaml_file = os.path.join(config_path, conf_file_default)
     print("Loading datalog configuration file {0}".format(yaml_file))
     stream = open(yaml_file, 'r')
-    projconf = yaml.load(stream)
+    conf = yaml.load(stream)
     # Project name
-    projectname = projconf['projectname']
+    projectname = conf['projectname']
     print('Configuration for project {0}'.format(projectname))
     print('Using configuration files in {0}'.format(config_path))
 
     pdb.set_trace()
     # Get valid paths from configuration
     # NOTE - If base_path is unset in conf, all other paths must be complete
-    base_path = projconf['base_path']
+    base_path = conf['base_path']
 
     #config_path_user = os.path.join(base_path,
-    #        projconf['paths']['config'])
+    #        conf['paths']['config'])
     raw_in_path = os.path.join(base_path,
-            projconf['default_data_paths']['raw_in'])
+            conf['default_data_paths']['raw_in'])
     raw_bak_path = os.path.join(base_path,
-            projconf['default_data_paths']['raw_bak'])
+            conf['default_data_paths']['raw_bak'])
     qa_path = os.path.join(base_path,
-            projconf['default_data_paths']['qa'])
+            conf['default_data_paths']['qa'])
     
     datalog_py_path = os.path.join(base_path,
-            projconf['datalog_py'])
+            conf['datalog_py'])
 
     # Site metadata file
     sitedata_file = os.path.join(base_path,
-            projconf['site_metadata'])
+            conf['site_metadata'])
 
     # Get name and subdirectory for datalog data types
     datasubdirs = {'rawdata_incoming':'',  
