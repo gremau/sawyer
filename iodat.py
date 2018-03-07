@@ -15,26 +15,29 @@ import datalog.config as conf
 import pdb
 
 conf_path = conf.config_path
-qa_path = conf.qa_path
-raw_incoming_path = conf.raw_in_path
-raw_backup_path = conf.raw_bak_path
+sites = conf.projectsites
+datadirs = conf.datapaths
 
-datadirs = conf.datadirs
-datasubdirs = conf.datasubdirs
+def site_datadir(sitename, datadir='qa'):
+    """
+    Retrieve correct directory path for given site and datadir type
 
-def site_datadir(sitename, datadir='quality_assured'):
+    Args:
+        sitename (string): name of site
+        datadir (string): name of desired data directory (member of datadirs)
+
+    Returns:
+        p (string): a validated path name
+        
     """
-    """
-    if datadir in datadirs:
-        if datadir=='rawdata_incoming':
-            path = os.path.join(raw_incoming_path, sitename)
-        elif datadir=='rawdata_backup':
-            path = os.path.join(raw_backup_path, sitename, datasubdirs[datadir])
-        else:
-            path = os.path.join(qa_path, sitename, datasubdirs[datadir])
+    if datadir in datadirs.keys():
+        p = datadirs[datadir].replace('{SITE}', sitename)
+        if not os.path.isdir(p):
+            raise ValueError('Query produced invalid path {0}'.format(p))
     else:
-        raise ValueError('Available data directories are {0}'.format(datadirs))
-    return path
+        raise ValueError('Available data directories are {0}'.format(
+            datadirs.keys()))
+    return p
 
 
 def get_file_collection(sitename, datapath, ext='.dat', optmatch=None):
@@ -51,6 +54,7 @@ def get_file_collection(sitename, datapath, ext='.dat', optmatch=None):
 
     If a list of strings in optmatch is given, additional strings can be
     matched
+    
     """
     # Get a list of filenames in provided data directory
     files = os.listdir(datapath)
