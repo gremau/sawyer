@@ -40,7 +40,7 @@ def site_datadir(sitename, datadir='qa'):
     return p
 
 
-def get_file_collection(sitename, datapath, optmatch=None):
+def get_file_collection(datapath, optmatch=None):
     """
     Read a list of filenames from a data directory, match against desired site,
     and return the list and the file datestamps of each file. This function
@@ -53,35 +53,49 @@ def get_file_collection(sitename, datapath, optmatch=None):
     """
     # Get a list of filenames in provided data directory
     files = os.listdir(datapath)
-    # Select desired filenames from the list (by site)
-    # This could easily fail if other parts of filename contain the sitename
-    site_files = [f for f in files if sitename in f]
+    files_m = files
     # Match optional strings if given
     if isinstance(optmatch, str): # optmatch must be a list
         optmatch = [optmatch]
     if optmatch is not None:
         for m in optmatch:
-            site_files = [f for f in files if m in f]
+            files_m = [f for f in files_m if m in f]
     
     # Get file date for each file. The file datestamp is in the 
     # filename with fields delimited by '_'
     file_dt = []
-    for i in site_files:
+    for i in files_m:
         tokens = i.split('_')
+        # NOTE - this is where finding file dates should change
         file_dt.append(dt.datetime.strptime('-'.join(tokens[-6:-1]),
             '%Y-%m-%d-%H-%M'))
-    return site_files, file_dt
+    return files_m, file_dt
 
 
-def most_recent_filematch(sitename, datapath, optmatch=None):
+def most_recent_filematch(datapath, optmatch=None):
     """
-    Return the most recent file in a directory matching the given site.
-    Other optional matching strings can be supplied
+    Return name of most recent file in a directory with optional pattern
+    matching.
     """
-    files, dates = get_file_collection(sitename, datapath,
-            optmatch=optmatch)
+    files, dates = get_file_collection(datapath, optmatch=optmatch)
     return files[dates.index(max(dates))], max(dates)
+
+
+def load_most_recent(sitename, datadir, optmatch=None):
+    """
+    Load the most recent file in a directory and return as pandas dataframe
+    (with optional pattern matching)
+    """
+    p = site_datadir(sitename, datadir)
+
+    if 'raw' in datadir:
+        df = site_raw_concat(p, optmatch=optmatch, iofunc=load_toa5)
+    else:
+        f, _ = most_recent_filematch(p, optmatch)
+        df = datalog_in(os.path.join(p, f), sitename=sitename)
     
+    return df
+
 
 def read_project_conf(confdir=conf_path):
     """
@@ -192,8 +206,7 @@ def load_toa5(fpathname, reindex=False) :
     return parsed_df_ret
 
 
-def site_raw_concat(sitename, datapath, setfreq='10min',
-        optmatch=None, iofunc=load_toa5):
+def site_raw_concat(datapath, setfreq='10min', optmatch=None, iofunc=load_toa5):
     """
     Load a list of raw datalogger files, append them, and then return a pandas
     DataFrame object. Also returns a list of file datestamps. 
@@ -217,7 +230,7 @@ def site_raw_concat(sitename, datapath, setfreq='10min',
     """
             
     # Get list of datalogger filenames and file datestamps from directory
-    files, file_dt = get_file_collection(sitename, datapath, optmatch=optmatch)
+    files, file_dt = get_file_collection(datapath, optmatch=optmatch)
     # Initialize DataFrame
     sitedf = pd.DataFrame()
     # Loop through each year and fill the dataframe
@@ -326,11 +339,22 @@ def datalog_out(df, sitename, outpath, datestamp=None,
 
 def datalog_in(filename, sitename=None):
     """
-    Read an datalog delimited text file with a metadata header.
+    Read an datalog delimited text file with a metadata header. If requested
+    check line 1 of header to ensure data comes from sitename.
     """
+    def retpr(line):
+        print(line.replace('\n', ""))
+        return(str(line))
+
     print('Opening ' + filename)
     with open(filename) as myfile:
-        [print(next(myfile).replace('\n', "")) for x in range(7)]
-
+        #[print(next(myfile).replace('\n', "")) for x in range(7)]
+        fheader = [retpr(next(myfile)) for x in range(7)]
+    
+    if (sitename is not None) and (
+            'location: {0}'.format(sitename) not in fheader[1]):
+        raise ValueError('File contains data from incorrect site')
+    
     df = pd.read_csv(filename, skiprows=7, parse_dates=True, index_col=0)
+
     return df
