@@ -40,7 +40,7 @@ def site_datadir(sitename, datadir='qa'):
     return p
 
 
-def get_file_collection(sitename, datapath, ext='.dat', optmatch=None):
+def get_file_collection(sitename, datapath, optmatch=None):
     """
     Read a list of filenames from a data directory, match against desired site,
     and return the list and the file datestamps of each file. This function
@@ -49,19 +49,13 @@ def get_file_collection(sitename, datapath, ext='.dat', optmatch=None):
 
     MNPclimoseq_Creosote_2017_03_17_11_55_00.dat
 
-    Only returns filenames matching the sitename and extension (.dat by 
-    default) strings.
-
-    If a list of strings in optmatch is given, additional strings can be
-    matched
-    
+    Only returns filenames matching the sitename (and optmatch) strings.
     """
     # Get a list of filenames in provided data directory
     files = os.listdir(datapath)
     # Select desired filenames from the list (by site)
-    # This could easily fail if other parts of filename contain the 
-    # site or extension name
-    site_files = [f for f in files if sitename in f and ext in f ]
+    # This could easily fail if other parts of filename contain the sitename
+    site_files = [f for f in files if sitename in f]
     # Match optional strings if given
     if isinstance(optmatch, str): # optmatch must be a list
         optmatch = [optmatch]
@@ -79,12 +73,12 @@ def get_file_collection(sitename, datapath, ext='.dat', optmatch=None):
     return site_files, file_dt
 
 
-def most_recent_filematch(sitename, datapath, ext='.dat', optmatch=None):
+def most_recent_filematch(sitename, datapath, optmatch=None):
     """
-    Return the most recent file in a directory matching the given site and
-    extension. Other optional matching strings can be supplied
+    Return the most recent file in a directory matching the given site.
+    Other optional matching strings can be supplied
     """
-    files, dates = get_file_collection(sitename, datapath, ext=ext,
+    files, dates = get_file_collection(sitename, datapath,
             optmatch=optmatch)
     return files[dates.index(max(dates))], max(dates)
     
@@ -198,7 +192,7 @@ def load_toa5(fpathname, reindex=False) :
     return parsed_df_ret
 
 
-def site_raw_concat(sitename, datapath, setfreq='10min', ext='.dat',
+def site_raw_concat(sitename, datapath, setfreq='10min',
         optmatch=None, iofunc=load_toa5):
     """
     Load a list of raw datalogger files, append them, and then return a pandas
@@ -223,8 +217,7 @@ def site_raw_concat(sitename, datapath, setfreq='10min', ext='.dat',
     """
             
     # Get list of datalogger filenames and file datestamps from directory
-    files, file_dt = get_file_collection(sitename, datapath, ext=ext,
-            optmatch=optmatch)
+    files, file_dt = get_file_collection(sitename, datapath, optmatch=optmatch)
     # Initialize DataFrame
     sitedf = pd.DataFrame()
     # Loop through each year and fill the dataframe
@@ -302,7 +295,7 @@ def rename_raw_variables(sitename, rawpath, rnpath, confdir=conf_path):
 
 
 def datalog_out(df, sitename, outpath, datestamp=None,
-        prefix=None, suffix='00'):
+        prefix=None, suffix='00', ext='.txt'):
     """
     Write a delimited text file with a metadata header.
     """
@@ -314,7 +307,7 @@ def datalog_out(df, sitename, outpath, datestamp=None,
     # Put together the output file name
     strlist = [prefix, sitename, datestamp, suffix]
     outfile = os.path.join(outpath,
-            '_'.join(filter(None, strlist)) + '.txt')
+            '_'.join(filter(None, strlist)) + ext)
     # Get name of currently running script and git SHA for metadata
     import __main__ as main # "main.__file__" names script calling datalog_out
     git_sha = sp.check_output(
