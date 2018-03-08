@@ -5,19 +5,19 @@ either in the current working directory or its parent
 
 Returns:
     projectname (string): name of the project
-    projectsites (string list): name for each site associated with project 
+    loggers (string list): name for each datalogger associated with project 
     config_path (string): path to configuration file
     defpaths (dict): default data paths specified in datalog_conf.yaml
     userpaths (dict): user defined data paths specified in datalog_conf.yaml
     datapaths (dict): combined dictionary with defpaths and userpaths items,
                       keys refer to the datatype/subdirectory, values are the 
-                      full path to that subdirectory abstracted for site name
+                      full path to that subdirectory abstracted for logger name
                       replacement
     sitedata_file (string): path of a site metadata file with variables for
-                      each site in the project.
+                      sites where loggers are located.
 
 There are other things this should do:
-    Make sure all sites have config directories
+    Make sure all loggers have config directories
     Maybe check for os and adjust things...
 """
 
@@ -26,44 +26,51 @@ import yaml
 import pdb
 
 conf_dir_default = "datalog_config"
-conf_file_default = "datalog_conf.yaml"
+project_c_default = "project.yaml"
+logger_c_default = "loggers.yaml"
 conf_flag = False
 
 # Get the project configuration path
-if os.path.isfile(os.path.join(conf_dir_default, conf_file_default)):
+if os.path.isfile(os.path.join(conf_dir_default, project_c_default)):
     config_path = os.path.join(os.getcwd(), conf_dir_default)
     conf_flag = True
-elif os.path.isfile(os.path.join('..', conf_dir_default, conf_file_default)):
+elif os.path.isfile(os.path.join('..', conf_dir_default, project_c_default)):
     config_path = os.path.join(os.path.dirname(os.getcwd()), conf_dir_default)
     conf_flag = True
 else:
     import warnings
-    warnings.warn('Warning: Project configuration directory not in current'
+    warnings.warn('Warning: datalog_config directory not in current'
             ' or parent directory. Project configs not found!')
 
 if conf_flag:
-    # Load the yaml file
-    yaml_file = os.path.join(config_path, conf_file_default)
-    print("Load datalog config: {0}".format(yaml_file))
+    # Load the project yaml file
+    yaml_file = os.path.join(config_path, project_c_default)
+    print("Load project config: {0}".format(yaml_file))
     stream = open(yaml_file, 'r')
-    conf = yaml.load(stream)
+    project_c = yaml.load(stream)
+
+    # Load the loggers yaml file
+    yaml_file = os.path.join(config_path, logger_c_default)
+    print("Load logger config: {0}".format(yaml_file))
+    stream = open(yaml_file, 'r')
+    logger_c = yaml.load(stream)
 
     # Project name
-    projectname = conf['projectname']
+    projectname = project_c['projectname']
     print('Project name: {0}'.format(projectname))
     print('Site configuration files in {0}'.format(config_path))
-    # Project sites
-    projectsites = conf['projectsites']
-    print('{0} sites in project: \n {1}'.format(
-        len(projectsites), ', '.join(projectsites)))
+    # Project loggers
+    loggers = [*logger_c.keys()]
+    print('{0} loggers in project: \n {1}'.format(
+        len(loggers), ', '.join(loggers)))
 
-    # Get valid paths from configuration
-    # NOTE - If base_path is unset in conf, all other paths must be complete
-    base_path = conf['base_path']
+    # Get valid paths from project_c
+    # NOTE - If base_path is unset, all other paths must be complete
+    base_path = project_c['base_path']
 
     # Get 5 default paths from yaml config,
     # First clean out None values from the default path dict
-    defpaths = {k:v for k,v in conf['default_data_paths'].items()
+    defpaths = {k:v for k,v in project_c['default_data_paths'].items()
             if v is not None}
     # The first 2 are required (key error if missing) and the rest are set
     # to match qa path by default
@@ -76,33 +83,34 @@ if conf_flag:
     defpaths['user'] = os.path.join(base_path,
             defpaths.get('user', defpaths['qa']))
     # Complete the user paths dictionary
-    userpaths = {k:v for k,v in conf['user_subdirs'].items() if v is not None}
+    userpaths = {k:v for k,v in project_c['user_subdirs'].items()
+            if v is not None}
     for k in userpaths.keys():
-        userpaths[k] = os.path.join(defpaths['user'], '{SITE}', k, '')
+        userpaths[k] = os.path.join(defpaths['user'], '{LOGGER}', k, '')
     # Complete the default paths in a new dictionary
     datapaths = {}
     for k in ['raw_in', 'qa', 'raw_bak', 'raw_std']:
-        datapaths[k] = os.path.join(defpaths[k], '{SITE}', k, '')
+        datapaths[k] = os.path.join(defpaths[k], '{LOGGER}', k, '')
     
     # Merge the  default and user path dictionaries
     datapaths.update(userpaths)
     
     # Datalog code path
-    datalog_py_path = os.path.join(base_path, conf['datalog_py'])
+    datalog_py_path = os.path.join(base_path, project_c['datalog_py'])
 
     # Site metadata file
-    sitedata_file = os.path.join(base_path, conf['site_metadata'])
+    sitedata_file = os.path.join(base_path, project_c['site_metadata'])
     
     # Print available data subdirectories for user:
     datadirs = list(datapaths.keys())
-    print('Each site has {0} data directories available: \n {1} \n'
-            'Use "iodat.site_datadir(sitename, datadir=datadir_name)"'
+    print('Each logger has {0} data directories available: \n {1} \n'
+            'Use "iodat.get_datadir(sitename, datadir=datadir_name)"'
             ' to get proper path'.format(len(datadirs), ', '.join(datadirs)))
 
 else:
     print('Project configs not loaded!')
     projectname='Unspecified'
-    projectsites=[]
+    loggers=[]
     config_path=''
     defpaths={}
     userpaths={}

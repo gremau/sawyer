@@ -15,15 +15,15 @@ import datalog.config as conf
 import pdb
 
 conf_path = conf.config_path
-sites = conf.projectsites
+loggers = conf.loggers
 datadirs = conf.datapaths
 
-def site_datadir(sitename, datadir='qa'):
+def get_datadir(logger, datadir='qa'):
     """
-    Retrieve correct directory path for given site and datadir type
+    Retrieve correct directory path for given logger and datadir type
 
     Args:
-        sitename (string): name of site
+        logger (string): name of logger
         datadir (string): name of desired data directory (member of datadirs)
 
     Returns:
@@ -31,7 +31,7 @@ def site_datadir(sitename, datadir='qa'):
         
     """
     if datadir in datadirs.keys():
-        p = datadirs[datadir].replace('{SITE}', sitename)
+        p = datadirs[datadir].replace('{LOGGER}', logger)
         if not os.path.isdir(p):
             raise ValueError('Query produced invalid path {0}'.format(p))
     else:
@@ -42,14 +42,14 @@ def site_datadir(sitename, datadir='qa'):
 
 def get_file_collection(datapath, optmatch=None):
     """
-    Read a list of filenames from a data directory, match against desired site,
+    Read a list of filenames from a data directory, match against desired logger,
     and return the list and the file datestamps of each file. This function
     expects to find a directory full of files with the format 
-    "prefix_<sitename>_<Y>_<m>_<d>_<H>_<M>_optionalsuffix.dat". For example:
+    "prefix_<loggername>_<Y>_<m>_<d>_<H>_<M>_optionalsuffix.dat". For example:
 
     MNPclimoseq_Creosote_2017_03_17_11_55_00.dat
 
-    Only returns filenames matching the sitename (and optmatch) strings.
+    Only returns filenames matching the lname (and optmatch) strings.
     """
     # Get a list of filenames in provided data directory
     files = os.listdir(datapath)
@@ -65,6 +65,7 @@ def get_file_collection(datapath, optmatch=None):
     # filename with fields delimited by '_'
     file_dt = []
     for i in files_m:
+        pdb.set_trace()
         tokens = i.split('_')
         # NOTE - this is where finding file dates should change
         file_dt.append(dt.datetime.strptime('-'.join(tokens[-6:-1]),
@@ -81,48 +82,48 @@ def most_recent_filematch(datapath, optmatch=None):
     return files[dates.index(max(dates))], max(dates)
 
 
-def load_most_recent(sitename, datadir, optmatch=None):
+def load_most_recent(lname, datadir, optmatch=None):
     """
     Load the most recent file in a directory and return as pandas dataframe
     (with optional pattern matching)
     """
-    p = site_datadir(sitename, datadir)
+    p = get_datadir(lname, datadir)
 
     if 'raw' in datadir:
-        df = site_raw_concat(p, optmatch=optmatch, iofunc=load_toa5)
+        df = concat_raw_files(p, optmatch=optmatch, iofunc=load_toa5)
     else:
         f, _ = most_recent_filematch(p, optmatch)
-        df = datalog_in(os.path.join(p, f), sitename=sitename)
+        df = datalog_in(os.path.join(p, f), lname=lname)
     
     return df
 
 
-def read_project_conf(confdir=conf_path):
+#def read_project_conf(confdir=conf_path):
+#    """
+#    Read the project YAML configuration file from the datalog
+#    configuration directory.
+#
+#    Args:
+#        confdir (string): directory to look for YAML configuration files
+#
+#    Returns:
+#        yamlf (dict): Returns a dictionary of configuration values
+#                      from the YAML file
+#    """
+#    yamlfile = os.path.join(confdir, 'datalog_conf.yaml')
+#    stream = open(yamlfile, 'r')
+#    yamlf = yaml.load(stream)
+#    return yamlf
+
+
+def read_yaml_conf(lname, yamltype, confdir=conf_path):
     """
-    Read the project YAML configuration file from the datalog
-    configuration directory.
-
-    Args:
-        confdir (string): directory to look for YAML configuration files
-
-    Returns:
-        yamlf (dict): Returns a dictionary of configuration values
-                      from the YAML file
-    """
-    yamlfile = os.path.join(confdir, 'datalog_conf.yaml')
-    stream = open(yamlfile, 'r')
-    yamlf = yaml.load(stream)
-    return yamlf
-
-
-def read_yaml_conf(sitename, yamltype, confdir=conf_path):
-    """
-    Read a specified YAML configuration file from a given site's datalog
+    Read a specified YAML configuration file from a given logger's datalog
     configuration directory. Checks the YAML file meta dictionary to ensure
-    configuration is for the correct site and type.
+    configuration is for the correct logger and type.
 
     Args:
-        sitename (string): site identifier
+        lname (string): logger identifier
         yamltype (string): identifies the YAML filename and configuration type
         confdir (string): directory to look for YAML configuration files
 
@@ -131,20 +132,20 @@ def read_yaml_conf(sitename, yamltype, confdir=conf_path):
                       from the YAML file
 
     Raises:
-        ValueError: Raises ValueError if the sitename or yamltype parameters
+        ValueError: Raises ValueError if the lname or yamltype parameters
                     do not match those found in the yaml file
     """
-    if sitename is 'all':
+    if lname is 'all':
         yamlfile = os.path.join(confdir, yamltype + '.yaml')
     else:
-        yamlfile = os.path.join(confdir, sitename, yamltype + '.yaml')
+        yamlfile = os.path.join(confdir, lname, yamltype + '.yaml')
     if os.path.isfile(yamlfile):
         stream = open(yamlfile, 'r')
         yamlf = yaml.load(stream)
-        ysite = yamlf['meta']['site']==sitename
+        ylogger = yamlf['meta']['logger']==lname
         ytype = yamlf['meta']['conftype']==yamltype
-        if not(ysite) or not(ytype):
-            raise ValueError('YAML file site/type mismatch.')
+        if not(ylogger) or not(ytype):
+            raise ValueError('YAML file logger/type mismatch.')
         else:
             return yamlf['items']
     else:
@@ -161,10 +162,13 @@ def calculate_freq(idx):
     cfreq = cfreq.seconds/60
     print("Calculated frequency is " + "{:5.3f}".format(cfreq) + " minutes")
     print("Rounding to " + str(round(cfreq)) + 'min')
+    print(pd.infer_freq(idx))
+    pdb.set_trace()
+
     return str(round(cfreq)) + "min"
 
 
-def load_toa5(fpathname, reindex=False) :
+def load_toa5(fpathname) :
     """
     Load a specified TOA5 datalogger file (a Campbell standard output format)
     and return a pandas DataFrame object. DataFrame has a datetime index and
@@ -173,9 +177,8 @@ def load_toa5(fpathname, reindex=False) :
 
     Args:
         fpathname (str) : path and filename of desired AF file
-        efreq (str)     : expected frequency of data file, used to reindex
     Return:
-        parsed_df   : pandas DataFrame    
+        parsed_df   : pandas DataFrame containing file data 
     """
 
     print('Parsing ' + fpathname)
@@ -185,28 +188,28 @@ def load_toa5(fpathname, reindex=False) :
             parse_dates = { 'Date': [0]}, index_col='Date',
             na_values=['NaN', 'NAN', 'INF', '-INF'])
     
-    cfreq = calculate_freq(parsed_df.index)
+    #cfreq = calculate_freq(parsed_df.index)
     # Create an index that includes every period between the first and
     # last datetimes in the file
-    startd = parsed_df.index.min()
-    endd = parsed_df.index.max()
-    fullidx = pd.date_range( startd, endd, freq=cfreq)
+    #startd = parsed_df.index.min()
+    #endd = parsed_df.index.max()
+    #fullidx = pd.date_range( startd, endd, freq=cfreq)
     # Warn if observations are missing
-    if len( parsed_df.index ) < len( fullidx ):
-        print("WARNING: index frequency is less than expected!")
-        print("Reindexing will introduce NaN values")
-    elif len( parsed_df.index ) > len( fullidx ):
-        print("WARNING: index frequency is greater than expected!")
-        print("Reindexing may remove valid values")
-    if reindex:
-        print("Reindexing dataframe...")
-        parsed_df_ret =  parsed_df.reindex(fullidx)
-    else:
-        parsed_df_ret = parsed_df
-    return parsed_df_ret
+    #if len( parsed_df.index ) < len( fullidx ):
+    #    print("WARNING: index frequency is less than expected!")
+    #    print("Reindexing will introduce NaN values")
+    #elif len( parsed_df.index ) > len( fullidx ):
+    #    print("WARNING: index frequency is greater than expected!")
+    #    print("Reindexing may remove valid values")
+    #if reindex:
+    #    print("Reindexing dataframe...")
+    #    parsed_df_ret =  parsed_df.reindex(fullidx)
+    #else:
+    #    parsed_df_ret = parsed_df
+    return parsed_df
 
 
-def site_raw_concat(datapath, setfreq='10min', optmatch=None, iofunc=load_toa5):
+def concat_raw_files(datapath, iofunc=load_toa5, optmatch=None, reindex=None):
     """
     Load a list of raw datalogger files, append them, and then return a pandas
     DataFrame object. Also returns a list of file datestamps. 
@@ -219,12 +222,12 @@ def site_raw_concat(datapath, setfreq='10min', optmatch=None, iofunc=load_toa5):
     have different frequencies.
     
     Args:
-        sitename: Site name
         datapath: Path to directory of data files
         iofunc  : function used to load each file
+        optmatch: optional string for matching filenames
     Returns:
-        sitedf  : pandas DataFrame containing concatenated raw data
-                      from one site
+        ldf  : pandas DataFrame containing concatenated raw data
+                      from one logger
         file_dt : list of datetime objects parsed from the filenames 
                       (file datestamp)
     """
@@ -232,38 +235,46 @@ def site_raw_concat(datapath, setfreq='10min', optmatch=None, iofunc=load_toa5):
     # Get list of datalogger filenames and file datestamps from directory
     files, file_dt = get_file_collection(datapath, optmatch=optmatch)
     # Initialize DataFrame
-    sitedf = pd.DataFrame()
+    ldf = pd.DataFrame()
     # Loop through each year and fill the dataframe
     for i in files:
         # Call load_toa5_file
         filedf = iofunc(os.path.join(datapath , i))
-        # And append to site_df, 'verify_integrity' warns if there are
+        # And append to ldf, 'verify_integrity' warns if there are
         # duplicate indices
-        sitedf = sitedf.append(filedf, verify_integrity=True)
+        ldf = ldf.append(filedf, verify_integrity=True)
+
+    if reindex is not None:
+        ldf = reindex_to(ldf, reindex)
+
+    return ldf, file_dt
+
+def reindex_to(df, freq_in='10T'):
+    """
+    """
     # Calculate frequency
-    cfreq = calculate_freq(sitedf.index)
+    cfreq = calculate_freq(df.index)
     # Create index spanning all days from min to max date
-    fullidx = pd.date_range(sitedf.index.min(), sitedf.index.max(),
-            freq = setfreq)
+    fullidx = pd.date_range(df.index.min(), df.index.max(), freq=freq_in)
     # Warn if observations are missing
-    if len( sitedf.index ) < len( fullidx ):
+    if len( df.index ) < len( fullidx ):
         print("WARNING: index frequency is less than expected!")
         print("Reindexing will introduce NaN values")
-    elif len( sitedf.index ) > len( fullidx ):
+    elif len( df.index ) > len( fullidx ):
         print("WARNING: index frequency is greater than expected!")
         print("Reindexing may remove valid values")
     # Now reindex the dataframe
     print("Reindexing dataframe...")
-    sitedf = sitedf.reindex( fullidx )
-    return sitedf, file_dt
+    ridf = df.reindex( fullidx )
+    return ridf, file_dt
 
 
-def rename_raw_variables(sitename, rawpath, rnpath, confdir=conf_path):
+def rename_raw_variables(lname, rawpath, rnpath, confdir=conf_path):
     """
     Rename raw datalogger variables according to YAML configuration file
 
     Args:
-        sitename (string): site identifier
+        lname (string): logger identifier
         rawpath (string): raw datalogger file path
         rnpath (string): path to write renamed data files
         confdir (string): directory to look for YAML configuration files
@@ -273,10 +284,10 @@ def rename_raw_variables(sitename, rawpath, rnpath, confdir=conf_path):
     """
     import re
     
-    # Get var_rename configuration file for site
-    yamlf = read_yaml_conf(sitename, 'var_rename', confdir=confdir)
+    # Get var_rename configuration file for logger
+    yamlf = read_yaml_conf(lname, 'var_rename', confdir=confdir)
     # Get list of filenames and their file datestamps from the raw directory
-    files, file_dt = get_file_collection(sitename, rawpath)
+    files, file_dt = get_file_collection(lname, rawpath)
     if bool(yamlf):
         # For each file, loop through each rename event and change headers
         for i, filename in enumerate(files):
@@ -302,12 +313,12 @@ def rename_raw_variables(sitename, rawpath, rnpath, confdir=conf_path):
                 file.write(filedata)
     else:
         print('No rename configuration for {0}, copying raw files'.format(
-            sitename))
+            lname))
         for filename in files:
             shutil.copy(os.path.join(rawpath, filename), rnpath)
 
 
-def datalog_out(df, sitename, outpath, datestamp=None,
+def datalog_out(df, lname, outpath, datestamp=None,
         prefix=None, suffix='00', ext='.txt'):
     """
     Write a delimited text file with a metadata header.
@@ -318,7 +329,7 @@ def datalog_out(df, sitename, outpath, datestamp=None,
     if datestamp is not None:
         datestamp = datestamp.strftime('%Y_%m_%d_%H_%M')
     # Put together the output file name
-    strlist = [prefix, sitename, datestamp, suffix]
+    strlist = [prefix, lname, datestamp, suffix]
     outfile = os.path.join(outpath,
             '_'.join(filter(None, strlist)) + ext)
     # Get name of currently running script and git SHA for metadata
@@ -326,7 +337,7 @@ def datalog_out(df, sitename, outpath, datestamp=None,
     git_sha = sp.check_output(
             ['git', 'rev-parse', 'HEAD']).decode('ascii').strip()
     # Write metadata block
-    meta_data = pd.Series([('location: {0}'.format(sitename)),
+    meta_data = pd.Series([('location: {0}'.format(lname)),
         ('date generated: {0}'.format(str(dt.datetime.now()))),
         ('writer: datalog.iodat.datalog_out'),
         ('writer HEAD SHA: {0}'.format(git_sha)),
@@ -337,10 +348,10 @@ def datalog_out(df, sitename, outpath, datestamp=None,
         meta_data.to_csv(fout, index=False)
         df.to_csv(fout, na_rep='NA')
 
-def datalog_in(filename, sitename=None):
+def datalog_in(filename, lname=None):
     """
     Read an datalog delimited text file with a metadata header. If requested
-    check line 1 of header to ensure data comes from sitename.
+    check line 1 of header to ensure data comes from lname.
     """
     def retpr(line):
         print(line.replace('\n', ""))
@@ -351,9 +362,9 @@ def datalog_in(filename, sitename=None):
         #[print(next(myfile).replace('\n', "")) for x in range(7)]
         fheader = [retpr(next(myfile)) for x in range(7)]
     
-    if (sitename is not None) and (
-            'location: {0}'.format(sitename) not in fheader[1]):
-        raise ValueError('File contains data from incorrect site')
+    if (lname is not None) and (
+            'location: {0}'.format(lname) not in fheader[1]):
+        raise ValueError('File contains data from incorrect logger')
     
     df = pd.read_csv(filename, skiprows=7, parse_dates=True, index_col=0)
 
