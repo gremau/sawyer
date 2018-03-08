@@ -11,12 +11,15 @@ import subprocess as sp
 import yaml
 import os
 import shutil
+import re
 import datalog.config as conf
 import pdb
 
 conf_path = conf.config_path
 loggers = conf.loggers
 datadirs = conf.datapaths
+filename_dt_rexp = conf.filename_dt_rexp
+filename_dt_fmt = conf.filename_dt_fmt
 
 def get_datadir(logger, datadir='qa'):
     """
@@ -39,6 +42,17 @@ def get_datadir(logger, datadir='qa'):
             datadirs.keys()))
     return p
 
+def dt_from_filename(filename, rexp=filename_dt_rexp, fmt=filename_dt_fmt):
+    """
+    (\d{4}){1}([_-]\d{2}){5}
+    """
+    dtstr = re.search(rexp, filename).group(0)
+    # Older files may be missing seconds - parse date anyway
+    try:
+        dtobj = dt.datetime.strptime(dtstr, fmt)
+    except:
+        dtobj = dt.datetime.strptime(dtstr, fmt[:-3])
+    return dtobj
 
 def get_file_collection(datapath, optmatch=None):
     """
@@ -61,16 +75,14 @@ def get_file_collection(datapath, optmatch=None):
         for m in optmatch:
             files_m = [f for f in files_m if m in f]
     
-    # Get file date for each file. The file datestamp is in the 
-    # filename with fields delimited by '_'
+    # Get file date and full path for each file. The file datestamp is
+    # specified in the project configuration file.
     file_dt = []
+    files_full = []
     for i in files_m:
-        pdb.set_trace()
-        tokens = i.split('_')
-        # NOTE - this is where finding file dates should change
-        file_dt.append(dt.datetime.strptime('-'.join(tokens[-6:-1]),
-            '%Y-%m-%d-%H-%M'))
-    return files_m, file_dt
+        file_dt.append(dt_from_filename(i))
+        files_full.append(os.path.join(datapath, i))
+    return files_m, file_dt, files_full
 
 
 def most_recent_filematch(datapath, optmatch=None):
@@ -78,10 +90,10 @@ def most_recent_filematch(datapath, optmatch=None):
     Return name of most recent file in a directory with optional pattern
     matching.
     """
-    files, dates = get_file_collection(datapath, optmatch=optmatch)
+    files, dates, _ = get_file_collection(datapath, optmatch=optmatch)
     return files[dates.index(max(dates))], max(dates)
 
-
+    
 def load_most_recent(lname, datadir, optmatch=None):
     """
     Load the most recent file in a directory and return as pandas dataframe
@@ -90,12 +102,15 @@ def load_most_recent(lname, datadir, optmatch=None):
     p = get_datadir(lname, datadir)
 
     if 'raw' in datadir:
-        df = concat_raw_files(p, optmatch=optmatch, iofunc=load_toa5)
+        raw_freq = conf.logger_c[lname]['rawfreq']
+        _, f_dt, fs = get_file_collection(p, optmatch=optmatch)
+        df = concat_raw_files(fs, optmatch=optmatch, iofunc=load_toa5,
+                reindex=raw_freq)
     else:
-        f, _ = most_recent_filematch(p, optmatch)
+        f, f_dt = most_recent_filematch(p, optmatch)
         df = datalog_in(os.path.join(p, f), lname=lname)
     
-    return df
+    return df, f_dt
 
 
 #def read_project_conf(confdir=conf_path):
@@ -162,9 +177,6 @@ def calculate_freq(idx):
     cfreq = cfreq.seconds/60
     print("Calculated frequency is " + "{:5.3f}".format(cfreq) + " minutes")
     print("Rounding to " + str(round(cfreq)) + 'min')
-    print(pd.infer_freq(idx))
-    pdb.set_trace()
-
     return str(round(cfreq)) + "min"
 
 
@@ -188,69 +200,50 @@ def load_toa5(fpathname) :
             parse_dates = { 'Date': [0]}, index_col='Date',
             na_values=['NaN', 'NAN', 'INF', '-INF'])
     
-    #cfreq = calculate_freq(parsed_df.index)
-    # Create an index that includes every period between the first and
-    # last datetimes in the file
-    #startd = parsed_df.index.min()
-    #endd = parsed_df.index.max()
-    #fullidx = pd.date_range( startd, endd, freq=cfreq)
-    # Warn if observations are missing
-    #if len( parsed_df.index ) < len( fullidx ):
-    #    print("WARNING: index frequency is less than expected!")
-    #    print("Reindexing will introduce NaN values")
-    #elif len( parsed_df.index ) > len( fullidx ):
-    #    print("WARNING: index frequency is greater than expected!")
-    #    print("Reindexing may remove valid values")
-    #if reindex:
-    #    print("Reindexing dataframe...")
-    #    parsed_df_ret =  parsed_df.reindex(fullidx)
-    #else:
-    #    parsed_df_ret = parsed_df
     return parsed_df
 
 
-def concat_raw_files(datapath, iofunc=load_toa5, optmatch=None, reindex=None):
+def concat_raw_files(files, iofunc=load_toa5, optmatch=None, reindex=None):
     """
     Load a list of raw datalogger files, append them, and then return a pandas
-    DataFrame object. Also returns a list of file datestamps. 
+    DataFrame object. 
 
-    Note that files don't load in chronological order, so the resulting 
-    dataframe is reindexed based on the min/max dates in the indices. This 
-    will fill in any missing values with NAN.
-    
-    Warns if observations are missing. Fails if indices of concatenated files
-    have different frequencies.
-    
+    Since files don't load in chronological order the resulting dataframe
+    must either be reindexed with a requested value (reindex arg) or reordered
+    with the index. Reindexing may add or remove rows (see reindex_to)
+      
     Args:
         datapath: Path to directory of data files
         iofunc  : function used to load each file
         optmatch: optional string for matching filenames
+        reindex: optional string with pandas frequency (default is None)
     Returns:
         ldf  : pandas DataFrame containing concatenated raw data
                       from one logger
-        file_dt : list of datetime objects parsed from the filenames 
-                      (file datestamp)
     """
             
     # Get list of datalogger filenames and file datestamps from directory
-    files, file_dt = get_file_collection(datapath, optmatch=optmatch)
+    # files, files_dt = get_file_collection(datapath, optmatch=optmatch)
     # Initialize DataFrame
     ldf = pd.DataFrame()
     # Loop through each year and fill the dataframe
     for i in files:
         # Call load_toa5_file
-        filedf = iofunc(os.path.join(datapath , i))
+        filedf = iofunc(i)
         # And append to ldf, 'verify_integrity' warns if there are
         # duplicate indices
         ldf = ldf.append(filedf, verify_integrity=True)
-
+    # Either reindex (if requested) or order by index
     if reindex is not None:
         ldf = reindex_to(ldf, reindex)
+    else:
+        ldf.sort_index(inplace=True)
 
-    return ldf, file_dt
+    return ldf
 
 def reindex_to(df, freq_in='10T'):
     """
+    Reindex dataframe to desired frequency
     """
     # Calculate frequency
     cfreq = calculate_freq(df.index)
@@ -266,7 +259,7 @@ def reindex_to(df, freq_in='10T'):
     # Now reindex the dataframe
     print("Reindexing dataframe...")
     ridf = df.reindex( fullidx )
-    return ridf, file_dt
+    return ridf
 
 
 def rename_raw_variables(lname, rawpath, rnpath, confdir=conf_path):
@@ -282,12 +275,10 @@ def rename_raw_variables(lname, rawpath, rnpath, confdir=conf_path):
     Returns:
         Does not return anything but writes new files in rnpath
     """
-    import re
-    
     # Get var_rename configuration file for logger
     yamlf = read_yaml_conf(lname, 'var_rename', confdir=confdir)
     # Get list of filenames and their file datestamps from the raw directory
-    files, file_dt = get_file_collection(lname, rawpath)
+    files, file_dt, _ = get_file_collection(rawpath)
     if bool(yamlf):
         # For each file, loop through each rename event and change headers
         for i, filename in enumerate(files):
@@ -327,7 +318,7 @@ def datalog_out(df, lname, outpath, datestamp=None,
     suffix = suffix.replace("_", "")
 
     if datestamp is not None:
-        datestamp = datestamp.strftime('%Y_%m_%d_%H_%M')
+        datestamp = datestamp.strftime(filename_dt_fmt)
     # Put together the output file name
     strlist = [prefix, lname, datestamp, suffix]
     outfile = os.path.join(outpath,

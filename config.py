@@ -64,6 +64,10 @@ if conf_flag:
     print('{0} loggers in project: \n {1}'.format(
         len(loggers), ', '.join(loggers)))
 
+    # Get filename datetime format and regexp strings
+    filename_dt_fmt = project_c['filename_dt_fmt']
+    filename_dt_rexp = project_c['filename_dt_rexp']
+
     # Get valid paths from project_c
     # NOTE - If base_path is unset, all other paths must be complete
     base_path = project_c['base_path']
@@ -116,3 +120,5 @@ else:
     userpaths={}
     datapaths={}
     sitedata_file=''
+    filename_dt_fmt = ''
+    filename_dt_rexp = ''
