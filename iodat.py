@@ -86,7 +86,6 @@ def get_file_list(datapath, optmatch=None, parsedt=False, fullpath=True):
         files = [os.path.join(datapath, f) for f in filelist]
     else:
         files = filelist
-
     # Parse dates if requested. Format specified in project configuration.
     if parsedt:
         return files, [dt_from_filename(f) for f in filelist]
@@ -103,7 +102,7 @@ def get_latest_file(datapath, optmatch=None):
     return files[fdates.index(max(fdates))], max(fdates)
 
     
-def most_recent_df(lname, datalevel, optmatch=None):
+def get_latest_df(lname, datalevel, optmatch=None):
     """
     Load the most recent file in a directory and return as pandas dataframe
     (with optional pattern matching)
@@ -204,7 +203,7 @@ def load_toa5(fdatapath) :
     print('Parsing ' + fdatapath)
 
     # Parse using Campbell timestamp
-    parsed_df = pd.read_csv(fpathname, skiprows=( 0,2,3 ), header=0,
+    parsed_df = pd.read_csv(fdatapath, skiprows=( 0,2,3 ), header=0,
             parse_dates = { 'Date': [0]}, index_col='Date',
             na_values=['NaN', 'NAN', 'INF', '-INF'])
     
