@@ -21,24 +21,24 @@ datadirs = conf.datapaths
 filename_dt_rexp = conf.filename_dt_rexp
 filename_dt_fmt = conf.filename_dt_fmt
 
-def get_datadir(logger, datadir='qa'):
+def get_datadir(lname, datalevel='qa'):
     """
-    Retrieve correct directory path for given logger and datadir type
+    Retrieve correct directory path for given logger and data level
 
     Args:
-        logger (string): name of logger
-        datadir (string): name of desired data directory (member of datadirs)
+        lname (string): name of logger
+        datalevel (string): name of desired data level (each has a directory)
 
     Returns:
         p (string): a validated path name
         
     """
-    if datadir in datadirs.keys():
-        p = datadirs[datadir].replace('{LOGGER}', logger)
+    if datalevel in datadirs.keys():
+        p = datadirs[datalevel].replace('{LOGGER}', lname)
         if not os.path.isdir(p):
             raise ValueError('Query produced invalid path {0}'.format(p))
     else:
-        raise ValueError('Available data directories are {0}'.format(
+        raise ValueError('Available data levels/directories are {0}'.format(
             datadirs.keys()))
     return p
 
@@ -47,67 +47,76 @@ def dt_from_filename(filename, rexp=filename_dt_rexp, fmt=filename_dt_fmt):
     (\d{4}){1}([_-]\d{2}){5}
     """
     dtstr = re.search(rexp, filename).group(0)
-    # Older files may be missing seconds - parse date anyway
+    # Some files may be missing seconds - parse date anyway
     try:
         dtobj = dt.datetime.strptime(dtstr, fmt)
     except:
         dtobj = dt.datetime.strptime(dtstr, fmt[:-3])
     return dtobj
 
-def get_file_collection(datapath, optmatch=None):
+def get_file_list(datapath, optmatch=None, parsedt=False, fullpath=True):
     """
-    Read a list of filenames from a data directory, match against desired logger,
-    and return the list and the file datestamps of each file. This function
-    expects to find a directory full of files with the format 
-    "prefix_<loggername>_<Y>_<m>_<d>_<H>_<M>_optionalsuffix.dat". For example:
+    Return a list of filenames and datestamps (optional) for a given 
+    data directory. of each file. If datestamp parsing is requested, the
+    function expects to find files that have a date/time timestamp that can
+    be parsed with dt_from_filename() using the project default formats.
 
-    MNPclimoseq_Creosote_2017_03_17_11_55_00.dat
+    Only returns filenames matching the optmatch strings, if given.
 
-    Only returns filenames matching the lname (and optmatch) strings.
+    Args:
+        datapath (string): a full path to a directory of data files
+        optmatch (string): optional string to match in filenames
+        parsedt (bool): parse timestamp in filename (False by default)
+        fullpath (bool): return full path. If False only filenames are returned
+    Returns:
+        files: list of file names/paths
+        file_dt: list of datetime objects corresponding to items in files
+                 (optional)
     """
     # Get a list of filenames in provided data directory
-    files = os.listdir(datapath)
-    files_m = files
+    filelist =  os.listdir(datapath) 
     # Match optional strings if given
     if isinstance(optmatch, str): # optmatch must be a list
         optmatch = [optmatch]
     if optmatch is not None:
         for m in optmatch:
-            files_m = [f for f in files_m if m in f]
-    
-    # Get file date and full path for each file. The file datestamp is
-    # specified in the project configuration file.
-    file_dt = []
-    files_full = []
-    for i in files_m:
-        file_dt.append(dt_from_filename(i))
-        files_full.append(os.path.join(datapath, i))
-    return files_m, file_dt, files_full
+            filelist = [f for f in filelist if m in f]
+    # Create full path if requested
+    if fullpath:
+        files = [os.path.join(datapath, f) for f in filelist]
+    else:
+        files = filelist
+
+    # Parse dates if requested. Format specified in project configuration.
+    if parsedt:
+        return files, [dt_from_filename(f) for f in filelist]
+    else:
+        return files
 
 
-def most_recent_filematch(datapath, optmatch=None):
+def get_latest_file(datapath, optmatch=None):
     """
     Return name of most recent file in a directory with optional pattern
     matching.
     """
-    files, dates, _ = get_file_collection(datapath, optmatch=optmatch)
-    return files[dates.index(max(dates))], max(dates)
+    files, fdates = get_file_list(datapath, optmatch=optmatch, parsedt=True, )
+    return files[fdates.index(max(fdates))], max(fdates)
 
     
-def load_most_recent(lname, datadir, optmatch=None):
+def most_recent_df(lname, datalevel, optmatch=None):
     """
     Load the most recent file in a directory and return as pandas dataframe
     (with optional pattern matching)
     """
-    p = get_datadir(lname, datadir)
+    p = get_datadir(lname, datalevel)
 
-    if 'raw' in datadir:
+    if 'raw' in datalevel:
         raw_freq = conf.logger_c[lname]['rawfreq']
-        _, f_dt, fs = get_file_collection(p, optmatch=optmatch)
+        fs, f_dt = get_file_list(p, optmatch=optmatch, parsedt=True)
         df = concat_raw_files(fs, optmatch=optmatch, iofunc=load_toa5,
                 reindex=raw_freq)
     else:
-        f, f_dt = most_recent_filematch(p, optmatch)
+        f, f_dt = get_latest_file(p, optmatch)
         df = datalog_in(os.path.join(p, f), lname=lname)
     
     return df, f_dt
@@ -180,20 +189,19 @@ def calculate_freq(idx):
     return str(round(cfreq)) + "min"
 
 
-def load_toa5(fpathname) :
+def load_toa5(fdatapath) :
     """
     Load a specified TOA5 datalogger file (a Campbell standard output format)
-    and return a pandas DataFrame object. DataFrame has a datetime index and
-    user is warned if any measurement periods appear to be missing. Dataframe
-    can be reindexed to fill in missing periods with NAN.
+    and return a pandas DataFrame object. DataFrame has a datetime index
+    and can be reindexed to fill in missing periods with NAN (reindex_to()).
 
     Args:
-        fpathname (str) : path and filename of desired AF file
+        fdatapath (str) : path and filename of desired TOA5 file
     Return:
         parsed_df   : pandas DataFrame containing file data 
     """
 
-    print('Parsing ' + fpathname)
+    print('Parsing ' + fdatapath)
 
     # Parse using Campbell timestamp
     parsed_df = pd.read_csv(fpathname, skiprows=( 0,2,3 ), header=0,
@@ -223,7 +231,7 @@ def concat_raw_files(files, iofunc=load_toa5, optmatch=None, reindex=None):
     """
             
     # Get list of datalogger filenames and file datestamps from directory
-    # files, files_dt = get_file_collection(datapath, optmatch=optmatch)
+    # files, files_dt = get_file_list(datapath, optmatch=optmatch)
     # Initialize DataFrame
     ldf = pd.DataFrame()
     # Loop through each year and fill the dataframe
@@ -278,7 +286,7 @@ def rename_raw_variables(lname, rawpath, rnpath, confdir=conf_path):
     # Get var_rename configuration file for logger
     yamlf = read_yaml_conf(lname, 'var_rename', confdir=confdir)
     # Get list of filenames and their file datestamps from the raw directory
-    files, file_dt, _ = get_file_collection(rawpath)
+    files, file_dt = get_file_list(rawpath, parsedt=True, fullpath=False)
     if bool(yamlf):
         # For each file, loop through each rename event and change headers
         for i, filename in enumerate(files):

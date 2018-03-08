@@ -107,7 +107,7 @@ if conf_flag:
     
     # Print available data subdirectories for user:
     datadirs = list(datapaths.keys())
-    print('Each logger has {0} data directories available: \n {1} \n'
+    print('Each logger has {0} data levels/directories available: \n {1} \n'
             'Use "iodat.get_datadir(sitename, datadir=datadir_name)"'
             ' to get proper path'.format(len(datadirs), ', '.join(datadirs)))
 
