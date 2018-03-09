@@ -93,12 +93,13 @@ def get_file_list(datapath, optmatch=None, parsedt=False, fullpath=True):
         return files
 
 
-def get_latest_file(datapath, optmatch=None):
+def get_latest_file(datapath, optmatch=None, fullpath=True):
     """
     Return name of most recent file in a directory with optional pattern
     matching.
     """
-    files, fdates = get_file_list(datapath, optmatch=optmatch, parsedt=True, )
+    files, fdates = get_file_list(datapath, optmatch=optmatch,
+            parsedt=True, fullpath=fullpath)
     return files[fdates.index(max(fdates))], max(fdates)
 
     

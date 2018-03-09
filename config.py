@@ -29,6 +29,14 @@ conf_dir_default = "datalog_config"
 project_c_default = "project.yaml"
 logger_c_default = "loggers.yaml"
 conf_flag = False
+import_uplots = False
+
+class tcol:
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    UNDERLINE = '\033[4m'
 
 # Get the project configuration path
 if os.path.isfile(os.path.join(conf_dir_default, project_c_default)):
@@ -39,8 +47,15 @@ elif os.path.isfile(os.path.join('..', conf_dir_default, project_c_default)):
     conf_flag = True
 else:
     import warnings
-    warnings.warn('Warning: datalog_config directory not in current'
-            ' or parent directory. Project configs not found!')
+    warnings.warn(tcol.WARNING + 
+            'datalog_config directory not in current'
+            ' or parent directory. Project configs not found!' + tcol.ENDC)
+
+# If the config directory contains a user_plots.py file, set flag to import
+if os.path.isfile(os.path.join(config_path, 'userplots.py')):
+    import_uplots=True
+    import sys
+    sys.path.append(config_path)
 
 if conf_flag:
     # Load the project yaml file
@@ -57,12 +72,14 @@ if conf_flag:
 
     # Project name
     projectname = project_c['projectname']
-    print('Project name: {0}'.format(projectname))
-    print('Site configuration files in {0}'.format(config_path))
+    print(tcol.OKGREEN + '\nProject name: ' +
+            tcol.ENDC + '{0}'.format(projectname))
+    print(tcol.OKGREEN + 'Site configuration files in ' +
+            tcol.ENDC + '\n  {0}'.format(config_path))
     # Project loggers
     loggers = [*logger_c.keys()]
-    print('{0} loggers in project: \n {1}'.format(
-        len(loggers), ', '.join(loggers)))
+    print(tcol.OKGREEN + '{0} loggers in project:'.format(len(loggers)) +
+            tcol.ENDC + '\n  {0}'.format(', '.join(loggers)))
 
     # Get filename datetime format and regexp strings
     filename_dt_fmt = project_c['filename_dt_fmt']
@@ -107,12 +124,17 @@ if conf_flag:
     
     # Print available data subdirectories for user:
     datadirs = list(datapaths.keys())
-    print('Each logger has {0} data levels/directories available: \n {1} \n'
-            'Use "iodat.get_datadir(sitename, datadir=datadir_name)"'
-            ' to get proper path'.format(len(datadirs), ', '.join(datadirs)))
-
+    #print('Each logger has {0} data levels/directories available: \n {1} \n'
+    #        'Use <io.get_datadir("loggername", "datalevel")>'
+    #        ' to return a path'.format(len(datadirs), ', '.join(datadirs)))
+    print(tcol.OKGREEN + 'Each logger has {0} data levels/directories'
+            ' available: '.format(len(datadirs)) +
+            tcol.ENDC + '\n  {0}\n'.format(', '.join(datadirs)) +
+            tcol.OKGREEN + 'Use ' + tcol.ENDC + tcol.UNDERLINE +
+            'io.get_datadir("loggername", "datalevel")' +tcol.ENDC +
+            tcol.OKGREEN + ' to return a path \n' + tcol.ENDC)
 else:
-    print('Project configs not loaded!')
+    print(tcol.WARNING + 'Project configs not loaded!' + tcol.ENDC)
     projectname='Unspecified'
     loggers=[]
     config_path=''
