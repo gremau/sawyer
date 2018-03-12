@@ -46,13 +46,17 @@ def dt_from_filename(filename, rexp=filename_dt_rexp, fmt=filename_dt_fmt):
     """
     (\d{4}){1}([_-]\d{2}){5}
     """
-    dtstr = re.search(rexp, filename).group(0)
-    # Some files may be missing seconds - parse date anyway
-    try:
-        dtobj = dt.datetime.strptime(dtstr, fmt)
-    except:
-        dtobj = dt.datetime.strptime(dtstr, fmt[:-3])
-    return dtobj
+    srchresult = re.search(rexp, filename)
+    if srchresult is None:
+        return None
+    else:
+        dtstr = srchresult.group(0)
+        # Some files may be missing seconds - parse date anyway
+        try:
+            dtobj = dt.datetime.strptime(dtstr, fmt)
+        except:
+            dtobj = dt.datetime.strptime(dtstr, fmt[:-3])
+        return dtobj
 
 def get_file_list(datapath, optmatch=None, parsedt=False, fullpath=True):
     """

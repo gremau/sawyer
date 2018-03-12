@@ -58,6 +58,7 @@ if os.path.isfile(os.path.join(config_path, 'userplots.py')):
     sys.path.append(config_path)
 
 if conf_flag:
+    print('starting datalog...')
     # Load the project yaml file
     yaml_file = os.path.join(config_path, project_c_default)
     print("Load project config: {0}".format(yaml_file))
@@ -74,7 +75,7 @@ if conf_flag:
     projectname = project_c['projectname']
     print(tcol.OKGREEN + '\nProject name: ' +
             tcol.ENDC + '{0}'.format(projectname))
-    print(tcol.OKGREEN + 'Site configuration files in ' +
+    print(tcol.OKGREEN + 'Site configuration files in: ' +
             tcol.ENDC + '\n  {0}'.format(config_path))
     # Project loggers
     loggers = [*logger_c.keys()]
