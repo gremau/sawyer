@@ -48,14 +48,8 @@ elif os.path.isfile(os.path.join('..', conf_dir_default, project_c_default)):
 else:
     import warnings
     warnings.warn(tcol.WARNING + 
-            'datalog_config directory not in current'
-            ' or parent directory. Project configs not found!' + tcol.ENDC)
-
-# If the config directory contains a user_plots.py file, set flag to import
-if os.path.isfile(os.path.join(config_path, 'userplots.py')):
-    import_uplots=True
-    import sys
-    sys.path.append(config_path)
+            '\ndatalog_config directory not in current'
+            ' or parent directory.\nProject configs not found!' + tcol.ENDC)
 
 if conf_flag:
     print('starting datalog...')
@@ -122,6 +116,13 @@ if conf_flag:
 
     # Site metadata file
     sitedata_file = os.path.join(base_path, project_c['site_metadata'])
+
+    # If the config directory contains a user_plots.py file, set flag to import
+    # and append config_path (plots imported by plots module).
+    if os.path.isfile(os.path.join(config_path, 'userplots.py')):
+        import_uplots=True
+        import sys
+        sys.path.append(config_path)
     
     # Print available data subdirectories for user:
     datadirs = list(datapaths.keys())
@@ -135,7 +136,8 @@ if conf_flag:
             'io.get_datadir("loggername", "datalevel")' +tcol.ENDC +
             tcol.OKGREEN + ' to return a path \n' + tcol.ENDC)
 else:
-    print(tcol.WARNING + 'Project configs not loaded!' + tcol.ENDC)
+    print(tcol.WARNING + 'Unspecified project, no datalog configs or paths '
+    'available' + tcol.ENDC)
     projectname='Unspecified'
     loggers=[]
     config_path=''
