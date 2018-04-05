@@ -117,7 +117,7 @@ if conf_flag:
     # Site metadata file
     sitedata_file = os.path.join(base_path, project_c['site_metadata'])
 
-    # If the config directory contains a user_plots.py file, set flag to import
+    # If the config directory contains a userplots.py file, set flag to import
     # and append config_path (plots imported by plots module).
     if os.path.isfile(os.path.join(config_path, 'userplots.py')):
         import_uplots=True
