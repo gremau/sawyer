@@ -348,8 +348,9 @@ def datalog_out(df, lname, outpath, datestamp=None,
         ('-------------------')])
     with open(outfile, 'w') as fout:
         fout.write('---file metadata---\n')
-        meta_data.to_csv(fout, index=False)
-        df.to_csv(fout, na_rep='NA')
+    fout.close()
+    meta_data.to_csv(fout, mode='a', index=False)
+    df.to_csv(fout, mode='a', na_rep='NA')
 
 def datalog_in(filename, lname=None):
     """
