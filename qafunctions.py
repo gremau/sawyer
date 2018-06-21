@@ -67,3 +67,50 @@ def mask_by_comparison_ind(df, idxrange, colrange, indvar,
     mask.loc[idxrange_thv, colrange] = True
     return [df, mask, True]
 
+def mask_by_rolling_stat(df, idxrange, colrange, indvar, stat,
+        window, comparison, thresh=0):
+    """
+    Mask values in matching idxrange and colrange AND where an independent
+    variable (indvar) is above/below cval 
+
+    Args:
+        df (dataframe): a pandas dataframe containing datalogger data
+        idxrange (boolean): rows of df to apply this function
+        colrange (boolean): columns of df to apply this function
+        indvar (string): variable name to apply moving statistic to
+        stat (string): statistic to apply to indvar ('mean','median','stdv')
+        window (int or string): moving window size (int or time, ie. '30min')
+        comparison (string): comparison to make to calculated statistic
+        thresh (float): threshold for comparison (compare to stat_ts +/- thresh)
+    Returns:
+        df: dataframe (unchanged)
+        mask: dataframe listing data removals (1 for remove)
+        bool: True for remove data
+    """
+    mask = pd.DataFrame(False, index=df.index, columns=df.columns)    
+    
+    # Calculate the time series statistic
+    if stat=='mean':
+        stat_ts = df[indvar].rolling(window,
+                center=True, min_periods=window-1).mean()
+    elif stat=='median':
+        stat_ts = df[indvar].rolling(window,
+                center=True, min_periods=window-1).median()
+    elif stat=='stdv':
+        raise ValueError('This STDDEV filter is not working yet!!!')
+        stat_ts = df[indvar].rolling(window,
+                center=True, min_periods=window-1).std()
+    else:
+        raise ValueError('Invalid statistic (mean, median, stdv)')
+    
+    # Compare the data to stat_ts and flag
+    if comparison=='above':
+        idxrange_thv = np.logical_and(idxrange, df[indvar] > stat_ts + thresh)
+    elif comparison=='below':
+        idxrange_thv = np.logical_and(idxrange, df[indvar] < stat_ts - thresh)
+    elif comparison=='equals':
+        idxrange_thv = np.logical_and(idxrange, df[indvar] == stat_ts)
+    else:
+        raise ValueError('Invalid comparison (above, below, equals)')
+    mask.loc[idxrange_thv, colrange] = True
+    return [df, mask, True]
