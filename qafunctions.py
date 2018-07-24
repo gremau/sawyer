@@ -1,9 +1,11 @@
 """
-Functions that can be called to qa a dataframe. These are generally called from
-the apply_qa_flags function in the flag module. Functions must return a 
-dataframe (often the same as the input), a boolean array mask indicating which
-dataframe values the qa flag points to, and a boolean value indicating whether
-the flagged data should be masked (True = flag for removal).
+Functions that can be called to qa a dataframe, either marking data for 
+removal, or transforming values in some way (unit conversions, calibration 
+corrections, etc.). These are generally called from the apply_qa_flags 
+function in the flag module. Functions must return a  dataframe (often the 
+same as the input), a boolean array mask indicating which dataframe values the
+qa flag points to, and a boolean value indicating whether the flagged data 
+should be masked (True = flag for removal).
 """
 
 import pandas as pd
@@ -11,6 +13,15 @@ import numpy as np
 import pdb
 
 nancval = ['NAN', 'NaN', 'Nan', 'nan']
+
+def scale_by_multiplier(df, idxrange, colrange, multiplier):
+    """
+    Scale all values in indicated row and column range by the multiplier
+    """
+    mask = pd.DataFrame(False, index=df.index, columns=df.columns)
+    mask.loc[idxrange, colrange] = True
+    df[mask] = df[mask] * multiplier
+    return [df, mask, False]
 
 def mask_by_datetime(df, idxrange, colrange):
     """
