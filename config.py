@@ -50,6 +50,17 @@ else:
     warnings.warn(tcol.WARNING + 
             '\ndatalog_config directory not in current'
             ' or parent directory.\nProject configs not found!' + tcol.ENDC)
+    user_inp = input('Would you like to select a project directory? (Y/n)\n')
+    if user_inp=='y' or user_inp=='Y' or user_inp=='yes' or user_inp=='Yes':
+        user_dir = input('Enter a valid path to datalog_config directory:')
+        if os.path.isfile(os.path.join(user_dir, project_c_default)):
+            print('Using {0} directory'.format(user_dir))
+            config_path = user_dir
+            conf_flag = True
+        else:
+            print('Not a valid datalog config directory. Continuing...')
+    else:
+        print('No directory given, continuing...')
 
 if conf_flag:
     print('starting datalog...')
