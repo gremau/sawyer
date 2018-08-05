@@ -9,14 +9,64 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from datalog import gffunctions
+import datalog.io as dio
 import pdb
 
+class GapfillSource:
+    """
+    Class to make gapfilling data accessible
+    """
 
-def get_gffunction(gfconf):
-    if 'gf_function' in gfconf:
-        outfunc = getattr(gffunctions, gfconf['gf_function'])
-        if 'gf_args' in gfconf
-            outargs = gfconf['gf_args']
+    def __init__(self, gapconfs):
+        sourcelist = [gapconfs[k]['source'] for k in gapconfs.keys()]
+        sourcelist = [item for sublist in sourcelist for item in sublist]
+        self.sourcelist = set(sourcelist)
+        self.sources = {}
+        for s in self.sourcelist:
+            if s in dio.loggers:
+                self.sources[s], _ = dio.get_latest_df(s,
+                        'qa', optmatch='masked')
+            else:
+                print
+
+    def get_source_df(self, colnum, gapconf, targetidx):
+        sourcenames = gapconf['source']
+        sourcecol = gapconf['source_cols'][colnum]
+        source_df = pd.DataFrame(index=targetidx)
+        # Multi-source fills send a >1 column dataframe to gffunc
+        if len(sourcenames) > 1:
+            # For multi-source fills, loop through the sources and join
+            # to source_df. Currently this should only apply to midpoint
+            # and THERE SHOULD PROBLY BE A CHECK FOR THAT
+            for name in sourcenames:
+                filldf = self.sources[name].loc[:,sourcecol]
+                source_df = source_df.join(filldf)
+        # Single source fills
+        else:
+            filldf = self.sources[sourcenames[0]].loc[:,sourcecol]
+            source_df = source_df.join(filldf)
+        # The source data can be trimmed, which could be useful for linear
+        # fits.
+        if 'start_fit' in gapconf and 'end_fit' in gapconf:
+            stf = gapconf['start_fit']
+            if stf is None:
+                stf = source_df.index.min()
+            enf = gapconf['end_fit']
+            if enf is None:
+                enf = datetime.now()
+            # Get the index range to be trimmed
+            idxrange = np.logical_and(source_df.index >= stf,
+                    source_df.index <= enf)
+        return source_df.loc[idxrange, :]
+
+        
+
+
+def get_gffunction(gapconf):
+    if 'gf_function' in gapconf:
+        outfunc = getattr(gffunctions, gapconf['gf_function'])
+        if 'gf_args' in gapconf:
+            outargs = gapconf['gf_args']
         else:
             outargs = ''
     else:
@@ -24,10 +74,11 @@ def get_gffunction(gfconf):
         outargs = ''
     return [outfunc, outargs]
 
-def apply_gapfilling(df, gfconf):
+def apply_gapfilling(df, gapconf):
     """
     Apply gapfilling to a dataframe. There are two types of operations that can
-    be performed on the input dataframe, depending on the QA flag:
+    be performed on the input dataframe, depending on the gapfilling
+    configuratioin:
 
     1. Transform data values based on qa flag input
     2. Mask data based on qa flag input
@@ -37,7 +88,7 @@ def apply_gapfilling(df, gfconf):
 
     Args:
         df      : input dataframe
-        gfconf   : qa_flag dictionary from the site's datalog configuration dir
+        gapconf   : qa_flag dictionary from the site's datalog configuration dir
     Returns:
         Three pandas dataframes with identical dimensions to the input df
         df_new  : original data with any qa transformations applied
@@ -46,34 +97,48 @@ def apply_gapfilling(df, gfconf):
 
     TODO - may want to add a flag for data already missing
     """
-    # Make a copy to be a qa'd dataframe, aboolean array, and a flag dataframe
+    # Make a copy to be a gapfilled dataframe, a boolean array,
+    # and a flag dataframe
     df_new = df.copy()
-    df_mask = pd.DataFrame(False, index=df.index, columns=df.columns)
-    df_flag = pd.DataFrame(0, index=df.index, columns=df.columns)
-    # Loop through qa flags
-    for i in flags.keys():
-        if i in (0, '0'):
-            raise ValueError('QA flag key cannot be zero (0)!')
-        flag_cols_in = flags[i]['columns']
-        st = flags[i]['start']
+    df_isfilled = pd.DataFrame(False, index=df.index, columns=df.columns)
+    df_gapnum = pd.DataFrame(0, index=df.index, columns=df.columns)
+    # Get gapfilling sources
+    gfsource = GapfillSource(gapconf)
+    # Loop through gapconf
+    for k, conf in gapconf.items():
+        if k in (0, '0'):
+            raise ValueError('Gapfill key cannot be zero (0)!')
+        
+        st = conf['start_fill']
         if st is None:
             st = df.index.min()
-        en = flags[i]['end']
+        en = conf['end_fill']
         if en is None:
             en = datetime.now()
-        qafunc, qaargs = get_qafunction(flags[i])
-        print('Apply QA flag {0}, using {1}.'.format(i, qafunc))
-        if flag_cols_in=='all':
+        # Get the gapfilling function and arguments
+        gffunc, gfargs = get_gffunction(conf)
+        print('Fill gap {0}, using {1}.'.format(k, gffunc))
+
+        if conf['gap_cols']=='all':
             # If "all" columns to be flagged select all
             colrange = df.columns
         else:
-            # Or find dataframe columns matching those in qa_flags
-            test = [any(s in var for s in flag_cols_in) for var in df.columns] 
+            # Or find dataframe columns matching those in gapconf
+            test = [any(s in var for s in conf['gap_cols'])
+                    for var in df.columns] 
             colrange = df.columns[test]
-        # Get the index range to be flagged
-        idxrange = np.logical_and(df.index >= st, df.index <= en)
-        # Get the mask for flag i and set appropriate flag
-        df_new, mask_i, rm = qafunc(df_new, idxrange, colrange, *qaargs)
+        # Get the index range to be filled
+        fillidx = np.logical_and(df.index >= st, df.index <= en)
+        # Note: conf['to_cols'] and conf['from_cols'] must be the same length
+        # might want to put in a check on this
+        for c, col in enumerate(conf['gap_cols']):
+            print('Fill column {0}'.format(col))
+            to_fill = df_new[col]
+            # Source data must be sent to gffunc, and it must be adjusted first
+            # by methods in the gfsource
+            source_df = gfsource.get_source_df(c, conf, df.index)
+            filled, gf_bool = gffunc(to_fill, source_df, fillidx, *gfargs)
+            pdb.set_trace()
         # Add mask_i to df_flag and to df_mask if data are to be masked
         df_flag = df_flag.where(mask_i, other=i)
         if rm:
@@ -81,21 +146,21 @@ def apply_gapfilling(df, gfconf):
 
     # Rewrite df_flag column names
     df_flag.columns = df_flag.columns + '_flag'
-    return df_new, df_mask, df_flag # df_new[df_mask]=np.nan will apply mask
+    return df_new, df_isfilled # df_new[df_mask]=np.nan will apply mask
 
-def gapfill_dataframes(df, flags):
+def fill_dataframe(df, gapconf):
     """
-    Get qa dataframes with flags appended and values masked
+    Get qa dataframes with gapconf appended and values masked
 
     Args:
         df: input dataframe
-        flags: qa_flag dictionary from the site's datalog configuration dir
+        gapconf: gapfill dictionary from the site's datalog configuration dir
     Returns:
-        df_qa       : QA'd dataframe with flags appended
-        df_qa_masked: QA'd dataframe with flags appended and mask applied
+        df_gf       : QA'd dataframe with gapconf appended
+        df_gf_masked: QA'd dataframe with gapconf appended and mask applied
     """
-    df_qa, df_mask, df_flag = apply_qa_flags(df, flags)
+    df_gf, df_isfilled = apply_gapfilling(df, gapconf)
     #df_qa_fl = pd.concat([df_qa, df_flag], axis=1)
-    df_qa_masked = df_qa.copy()
-    df_qa_masked[df_mask] = np.nan
-    return df_qa, df_qa_masked, df_flag 
+    #df_qa_masked = df_qa.copy()
+    #df_qa_masked[df_mask] = np.nan
+    return df_gf, df_isfilled 
