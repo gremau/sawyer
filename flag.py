@@ -51,33 +51,33 @@ def apply_qa_flags(df, flags):
     df_mask = pd.DataFrame(False, index=df.index, columns=df.columns)
     df_flag = pd.DataFrame(0, index=df.index, columns=df.columns)
     # Loop through qa flags
-    for i in flags.keys():
-        if i in (0, '0'):
+    for k, flag in flags.items():
+        if k in (0, '0'):
             raise ValueError('QA flag key cannot be zero (0)!')
-        flag_cols_in = flags[i]['columns']
-        st = flags[i]['start']
+        st = flag['start']
         if st is None:
             st = df.index.min()
-        en = flags[i]['end']
+        en = flag['end']
         if en is None:
             en = datetime.now()
-        qafunc, qaargs = get_qafunction(flags[i])
-        print('Apply QA flag {0}, using {1}.'.format(i, qafunc))
-        if flag_cols_in=='all':
+        qafunc, qaargs = get_qafunction(flag)
+        print('Apply QA flag {0}, using {1}.'.format(k, qafunc))
+        if flag['columns']=='all':
             # If "all" columns to be flagged select all
             colrange = df.columns
         else:
             # Or find dataframe columns matching those in qa_flags
-            test = [any(s in var for s in flag_cols_in) for var in df.columns] 
+            test = [any(s in var for s in flag['columns'])
+                    for var in df.columns] 
             colrange = df.columns[test]
         # Get the index range to be flagged
         idxrange = np.logical_and(df.index >= st, df.index <= en)
-        # Get the mask for flag i and set appropriate flag
-        df_new, mask_i, rm = qafunc(df_new, idxrange, colrange, *qaargs)
-        # Add mask_i to df_flag and to df_mask if data are to be masked
-        df_flag = df_flag.where(mask_i, other=i)
+        # Get the mask for flag k and set appropriate flag
+        df_new, mask_k, rm = qafunc(df_new, idxrange, colrange, *qaargs)
+        # Add mask_k to df_flag and to df_mask if data are to be masked
+        df_flag = df_flag.where(mask_k, other=k)
         if rm:
-            df_mask = np.logical_or(df_mask, mask_i)
+            df_mask = np.logical_or(df_mask, mask_k)
 
     # Rewrite df_flag column names
     df_flag.columns = df_flag.columns + '_flag'
