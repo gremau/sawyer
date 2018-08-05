@@ -38,8 +38,12 @@ class GapfillSource:
             # For multi-source fills, loop through the sources and join
             # to source_df. Currently this should only apply to midpoint
             # and THERE SHOULD PROBLY BE A CHECK FOR THAT
-            for name in sourcenames:
-                filldf = self.sources[name].loc[:,sourcecol]
+            # Get colname from second source_cols list (must be same size)
+            sourcecol = [sourcecol]
+            sourcecol.append(gapconf['source_cols_2'][colnum])
+            for i, sname in enumerate(sourcenames):
+                filldf = self.sources[sname].loc[:,sourcecol[i]]
+                filldf.name = sname + '_' + filldf.name
                 source_df = source_df.join(filldf)
         # Single source fills
         else:
@@ -137,15 +141,13 @@ def apply_gapfilling(df, gapconf):
             # Source data must be sent to gffunc, and it must be adjusted first
             # by methods in the gfsource
             source_df = gfsource.get_source_df(c, conf, df.index)
-            filled, gf_bool = gffunc(to_fill, source_df, fillidx, *gfargs)
-            pdb.set_trace()
+            df_new[col], gf_bool = gffunc(to_fill, source_df, fillidx, *gfargs)
+            df_isfilled[col] = np.logical_or(gf_bool, df_isfilled[col])
         # Add mask_i to df_flag and to df_mask if data are to be masked
-        df_flag = df_flag.where(mask_i, other=i)
-        if rm:
-            df_mask = np.logical_or(df_mask, mask_i)
+        # df_flag = df_flag.where(mask_i, other=i)
 
     # Rewrite df_flag column names
-    df_flag.columns = df_flag.columns + '_flag'
+    df_isfilled.columns = df_isfilled.columns + '_f'
     return df_new, df_isfilled # df_new[df_mask]=np.nan will apply mask
 
 def fill_dataframe(df, gapconf):

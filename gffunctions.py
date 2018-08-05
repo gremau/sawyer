@@ -28,23 +28,27 @@ def substitution(y_to, source, fillidx, conf):
         
     return y_out
 
-def midpoint(y_to, source, fillidx):
+def midpoint(y_gaps, source, fillidx):
     """
     Mask values in matching idxrange and colrange AND colrange variables
     are above/below cval 
     """
-    y_out = y_to.copy()
-
-    yx = pd.concat([y_to, x_from1, x_from2], axis=1, join='inner')
+    y_out = y_gaps.copy()
+    x_src = source.copy()
+    # AUDIT - do  want an inner join (intersection)? Is this needed at all?
+    # What if the source is shorter than y_gaps[fillidx]?
+    yx = pd.concat([y_gaps, x_src], axis=1, join='inner')
     yx.columns = ['y', 'x1', 'x2']
     
     #commonidx = ~yx.isna().any(1)
     x1x2idx = np.logical_and(~np.isnan(yx.x1), ~np.isnan(yx.x2))
-    gapfillidx = np.logical_and(x1x2idx, np.isnan(xy.y))
-
-    y_out[gapfillidx] = yx[gapfillidx].loc[:,['x1','x2']].mean(axis=1)
+    ypredict = np.logical_and(x1x2idx, np.isnan(yx.y))
+    # Gapfill (constrained by fillidx)
+    ypredict_fill = np.logical_and(ypredict, fillidx)
+    # Fill with mean of x1 and x2
+    y_out[ypredict_fill] = yx[ypredict_fill].loc[:,['x1','x2']].mean(axis=1)
         
-    return y_out
+    return y_out, ypredict_fill
 
 
 def linearfit(y_gaps, source, fillidx, zero_intcpt=False):
