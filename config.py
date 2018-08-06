@@ -95,28 +95,28 @@ if conf_flag:
     # NOTE - If base_path is unset, all other paths must be complete
     base_path = project_c['base_path']
 
-    # Get 5 default paths from yaml config,
+    # Get default paths to where datalogger tree begins from yaml config,
     # First clean out None values from the default path dict
     defpaths = {k:v for k,v in project_c['default_data_paths'].items()
             if v is not None}
-    # The first 2 are required (key error if missing) and the rest are set
-    # to match qa path by default
-    defpaths['raw_in'] = os.path.join(base_path, defpaths['raw_in'])
-    defpaths['qa'] = os.path.join(base_path, defpaths['qa'])
-    defpaths['raw_bak'] = os.path.join(base_path,
-            defpaths.get('raw_bak', defpaths['qa']))
-    defpaths['raw_std'] = os.path.join(base_path,
-            defpaths.get('raw_std', defpaths['qa']))
-    defpaths['user'] = os.path.join(base_path,
-            defpaths.get('user', defpaths['qa']))
+    # 'qa' and 'raw_in' are required (key error if missing) and the rest
+    # are set to match qa path if they are missing
+    for k in project_c['default_data_paths'].keys():
+        if k is 'raw_in' or k is 'qa':
+            defpaths[k] = os.path.join(base_path, defpaths[k])
+        else:
+            defpaths[k] = os.path.join(base_path,
+                    defpaths.get(k, defpaths['qa']))
     # Complete the user paths dictionary
-    userpaths = {k:v for k,v in project_c['user_subdirs'].items()
-            if v is not None}
-    for k in userpaths.keys():
-        userpaths[k] = os.path.join(defpaths['user'], '{LOGGER}', k, '')
+    userpaths = {}
+    for k, v in project_c['user_subdirs'].items():
+        if os.path.isdir(v):
+            userpaths[k] = os.path.join(v, '{LOGGER}', k, '')
+        else:
+            userpaths[k] = os.path.join(defpaths['qa'], '{LOGGER}', k, '')
     # Complete the default paths in a new dictionary
     datapaths = {}
-    for k in ['raw_in', 'qa', 'raw_bak', 'raw_std']:
+    for k in defpaths.keys():
         datapaths[k] = os.path.join(defpaths[k], '{LOGGER}', k, '')
     
     # Merge the  default and user path dictionaries
