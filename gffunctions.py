@@ -3,6 +3,9 @@ Functions that can be called to gapfill a dataframe. These are generally
 called from the gapfill_series function in the gapfill module. Functions 
 must return a dataframe (often the same as the input), and a boolean array mask
 indicating which dataframe values are gapfilled.
+
+
+TODO - put in warnings about small amounts of fill data (relative to gaps)
 """
 
 import pandas as pd
@@ -39,7 +42,6 @@ def midpoint(y_gaps, source, fillidx):
     # What if the source is shorter than y_gaps[fillidx]?
     yx = pd.concat([y_gaps, x_src], axis=1, join='inner')
     yx.columns = ['y', 'x1', 'x2']
-    
     #commonidx = ~yx.isna().any(1)
     x1x2idx = np.logical_and(~np.isnan(yx.x1), ~np.isnan(yx.x2))
     ypredict = np.logical_and(x1x2idx, np.isnan(yx.y))

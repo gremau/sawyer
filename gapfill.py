@@ -105,7 +105,6 @@ def apply_gapfilling(df, gapconf):
     # and a flag dataframe
     df_new = df.copy()
     df_isfilled = pd.DataFrame(False, index=df.index, columns=df.columns)
-    df_gapnum = pd.DataFrame(0, index=df.index, columns=df.columns)
     # Get gapfilling sources
     gfsource = GapfillSource(gapconf)
     # Loop through gapconf
@@ -143,8 +142,6 @@ def apply_gapfilling(df, gapconf):
             source_df = gfsource.get_source_df(c, conf, df.index)
             df_new[col], gf_bool = gffunc(to_fill, source_df, fillidx, *gfargs)
             df_isfilled[col] = np.logical_or(gf_bool, df_isfilled[col])
-        # Add mask_i to df_flag and to df_mask if data are to be masked
-        # df_flag = df_flag.where(mask_i, other=i)
 
     # Rewrite df_flag column names
     df_isfilled.columns = df_isfilled.columns + '_f'
