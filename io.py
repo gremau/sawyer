@@ -337,6 +337,10 @@ def datalog_out(df, lname, outpath, datestamp=None,
             '_'.join(filter(None, strlist)) + ext)
     # Get name of currently running script and git SHA for metadata
     import __main__ as main # "main.__file__" names script calling datalog_out
+    try:
+        scriptname = main.__file__
+    except AttributeError:
+        scriptname = 'interactive'
     git_sha = sp.check_output(
             ['git', 'rev-parse', 'HEAD']).decode('ascii').strip()
     # Write metadata block
@@ -344,13 +348,13 @@ def datalog_out(df, lname, outpath, datestamp=None,
         ('date generated: {0}'.format(str(dt.datetime.now()))),
         ('writer: datalog.iodat.datalog_out'),
         ('writer HEAD SHA: {0}'.format(git_sha)),
-        ('called from: {0}'.format(main.__file__)),
+        ('called from: {0}'.format(scriptname)),
         ('-------------------')])
     with open(outfile, 'w') as fout:
         fout.write('---file metadata---\n')
-    fout.close()
-    meta_data.to_csv(fout, mode='a', index=False)
-    df.to_csv(fout, mode='a', na_rep='NA')
+    #fout.close()
+        meta_data.to_csv(fout, mode='a', index=False)
+        df.to_csv(fout, mode='a', na_rep='NA')
 
 def datalog_in(filename, lname=None):
     """
