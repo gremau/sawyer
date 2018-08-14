@@ -102,7 +102,7 @@ if conf_flag:
     # 'qa' and 'raw_in' are required (key error if missing) and the rest
     # are set to match qa path if they are missing
     for k in project_c['default_data_paths'].keys():
-        if k is 'raw_in' or k is 'qa':
+        if k=='raw_in' or k=='qa':
             defpaths[k] = os.path.join(base_path, defpaths[k])
         else:
             defpaths[k] = os.path.join(base_path,
@@ -110,7 +110,7 @@ if conf_flag:
     # Complete the user paths dictionary
     userpaths = {}
     for k, v in project_c['user_subdirs'].items():
-        if os.path.isdir(v):
+        if os.path.isdir(str(v)):
             userpaths[k] = os.path.join(v, '{LOGGER}', k, '')
         else:
             userpaths[k] = os.path.join(defpaths['qa'], '{LOGGER}', k, '')
