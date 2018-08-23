@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import datalog.dtools as dtool
 import datalog.config as conf
+import pdb
 
 class tcol:
     WARNING = '\033[93m'
@@ -81,7 +82,7 @@ def qa_var_tsplot(ax, varname, df, df_qa, df_qa_masked):
     """
     Plot a variable showing what has been modified in the qa process
     """
-    varname_f = varname + '_flag'
+    #varname_f = varname + '_flag'
     # Plot original data and overlay qa data
     ax.plot(df.index, df[varname], marker= '.', ls='none', color = '0.75',
             label='Raw file data')
@@ -96,5 +97,21 @@ def qa_var_tsplot(ax, varname, df, df_qa, df_qa_masked):
             label='Masked values')
     ax.set_ylabel(varname)
     #ax.legend()
+
+    return ax
+
+def gf_var_tsplot(ax, varnames, df_qa, df_gf):
+    """
+    Plot a variable showing what has been gapfilled
+    """
+    #varname_f = varname + '_f'
+    # Plot original data and overlay qa data
+    for varname in varnames:
+        ax.plot(df_gf.index, df_gf[varname], marker= '.', ls='none',
+                color = 'g', label='Gapfilled')
+        ax.plot(df_qa.index, df_qa[varname], marker='.', ls='none')
+        
+    #ax.set_ylabel(varname)
+    ax.legend()
 
     return ax

@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from datalog import gffunctions
+import datalog.plots as dpl
 import datalog.io as dio
 import pdb
 
@@ -78,7 +79,7 @@ def get_gffunction(gapconf):
         outargs = ''
     return [outfunc, outargs]
 
-def apply_gapfilling(df, gapconf):
+def apply_gapfilling(df, gapconf, plot=False):
     """
     Apply gapfilling to a dataframe. There are two types of operations that can
     be performed on the input dataframe, depending on the gapfilling
@@ -143,11 +144,18 @@ def apply_gapfilling(df, gapconf):
             df_new[col], gf_bool = gffunc(to_fill, source_df, fillidx, *gfargs)
             df_isfilled[col] = np.logical_or(gf_bool, df_isfilled[col])
 
+        # Plot if requested
+        if plot:
+            import matplotlib.pyplot as plt
+            fig, ax = plt.subplots(1,1)
+            dpl.gf_var_tsplot(ax, conf['gap_cols'], df, df_new)
+            plt.show()
+
     # Rewrite df_flag column names
     df_isfilled.columns = df_isfilled.columns + '_f'
     return df_new, df_isfilled # df_new[df_mask]=np.nan will apply mask
 
-def fill_dataframe(df, gapconf):
+def fill_dataframe(df, gapconf, plot=False):
     """
     Get qa dataframes with gapconf appended and values masked
 
@@ -158,7 +166,7 @@ def fill_dataframe(df, gapconf):
         df_gf       : QA'd dataframe with gapconf appended
         df_gf_masked: QA'd dataframe with gapconf appended and mask applied
     """
-    df_gf, df_isfilled = apply_gapfilling(df, gapconf)
+    df_gf, df_isfilled = apply_gapfilling(df, gapconf, plot=plot)
     #df_qa_fl = pd.concat([df_qa, df_flag], axis=1)
     #df_qa_masked = df_qa.copy()
     #df_qa_masked[df_mask] = np.nan
