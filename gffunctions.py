@@ -4,24 +4,62 @@ called from the gapfill_series function in the gapfill module. Functions
 must return a dataframe (often the same as the input), and a boolean array mask
 indicating which dataframe values are gapfilled.
 
+In many cases we are accessing interpolation methods in scipy.interpolate,
+especially in univariate cases (filling gaps indepenedent of any other
+timeseries). For more information see here:
+
+https://docs.scipy.org/doc/scipy/reference/interpolate.html
+
+and here:
+    
+https://docs.scipy.org/doc/scipy/reference/tutorial/interpolate.html
 
 TODO - put in warnings about small amounts of fill data (relative to gaps)
 """
 
 import pandas as pd
 import numpy as np
-import pdb
+from IPython.core.debugger import set_trace
 
 nancval = ['NAN', 'NaN', 'Nan', 'nan']
 
-def substitution(y_to, source, fillidx, conf):
+def fillna(y_gaps, *args, **kwargs):
+    """
+    Wrapper for pandas.DataFrame.fillna
+
+    All arguments should go into gf_kwargs in gapfill.yaml
+
+    See documentation at:
+    
+    https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.fillna.html
+    """
+    source, fillidx = args[0], args[1]
+
+    return y_gaps.fillna(*args, **kwargs)
+
+def interpolate(y_gaps, *args, **kwargs):
+    """
+    Wrapper for pandas.DataFrame.interpolate
+
+    All arguments should go into gf_kwargs in gapfill.yaml
+
+    See documentation at:
+    
+    https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.interpolate.html
+    """
+    return y_gaps.interpolate(*args, **kwargs)
+
+
+def substitution(y_gaps, *args):
     """
     Mask values in matching idxrange and colrange AND colrange variables
     are above/below cval 
     """
-    y_out = y_to.copy()
+    source, fillidx = args[0], args[1]
 
-    yx = pd.concat([y_to, x_from], axis=1, join='inner')
+    y_out = y_gaps.copy()
+
+    yx = pd.concat([y_gaps, x_from], axis=1, join='inner')
     yx.columns = ['y', 'x']
     
     #commonidx = ~yx.isna().any(1)
@@ -31,11 +69,12 @@ def substitution(y_to, source, fillidx, conf):
         
     return y_out
 
-def midpoint(y_gaps, source, fillidx):
+def midpoint(y_gaps, *args):
     """
     Mask values in matching idxrange and colrange AND colrange variables
     are above/below cval 
     """
+    source, fillidx = args[0], args[1]
     y_out = y_gaps.copy()
     x_src = source.copy()
     # AUDIT - do  want an inner join (intersection)? Is this needed at all?
@@ -53,13 +92,15 @@ def midpoint(y_gaps, source, fillidx):
     return y_out, ypredict_fill
 
 
-def linearfit(y_gaps, source, fillidx, zero_intcpt=False):
+def linearfit(y_gaps, *args, zero_intcpt=False, **kwargs):
     """
     Mask all matching idxrange and colrange
     """
+    source, fillidx = args[0], args[1]
+
     y_out = y_gaps.copy()
     x_src = source.copy()
-    #yfillidx = np.isnan(y_to)
+    #yfillidx = np.isnan(y_gaps)
     # AUDIT - do  want an inner join (intersection)? Is this needed at all?
     # What if the source is shorter than y_gaps[fillidx]?
     yx = pd.concat([y_gaps, x_src], axis=1, join='inner')
@@ -91,15 +132,17 @@ def linearfit(y_gaps, source, fillidx, zero_intcpt=False):
     return y_out, ypredict_fill
 
 
-def linearfit2(y_to, source, conf):
+def linearfit2(y_gaps, *args):
     """
     Mask all matching idxrange and colrange
     """
     import scipy.optimize as sciop
 
-    y_out = y_to.copy()
+    source, fillidx = args[0], args[1]
 
-    yx = pd.concat([y_to, x_from], axis=1, join='inner')
+    y_out = y_gaps.copy()
+
+    yx = pd.concat([y_gaps, x_from], axis=1, join='inner')
     yx.columns = ['y', 'x']
     
     commonidx = ~yx.isna().any(1)

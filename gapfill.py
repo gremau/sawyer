@@ -11,7 +11,7 @@ from datetime import datetime
 from datalog import gffunctions
 import datalog.plots as dpl
 import datalog.io as dio
-import pdb
+from IPython.core.debugger import set_trace
 
 class GapfillSource:
     """
@@ -19,16 +19,20 @@ class GapfillSource:
     """
 
     def __init__(self, gapconfs):
-        sourcelist = [gapconfs[k]['source'] for k in gapconfs.keys()]
+        # Get a list of all sources in the gapfill.yaml file (exclude items
+        # without an external source)
+        sourcelist = [gapconfs[k]['source'] for k in gapconfs.keys()
+                if 'source' in gapconfs[k]]
         sourcelist = [item for sublist in sourcelist for item in sublist]
         self.sourcelist = set(sourcelist)
+        # Load dataframes for all external sources into a dictionary
         self.sources = {}
         for s in self.sourcelist:
-            if s in dio.loggers:
+            if s in dio.loggers: # Check if it is a datalogger in this project
                 self.sources[s], _ = dio.get_latest_df(s,
                         'qa', optmatch='masked')
-            else:
-                print
+            else: # Eventually check for other sources...
+                raise(ValueError('Not a valid datalogger name'))
 
     def get_source_df(self, colnum, gapconf, targetidx):
         sourcenames = gapconf['source']
@@ -64,20 +68,20 @@ class GapfillSource:
                     source_df.index <= enf)
         return source_df.loc[idxrange, :]
 
-        
-
 
 def get_gffunction(gapconf):
+    """
+    Get the gapfilling function and arguments
+    """
+    args = ()
     if 'gf_function' in gapconf:
         outfunc = getattr(gffunctions, gapconf['gf_function'])
         if 'gf_args' in gapconf:
-            outargs = gapconf['gf_args']
-        else:
-            outargs = ''
+            args = gapconf['gf_args']
     else:
         outfunc = getattr(gffunctions, 'substitution')
-        outargs = ''
-    return [outfunc, outargs]
+
+    return [outfunc, args]
 
 def apply_gapfilling(df, gapconf, plot=False):
     """
@@ -120,7 +124,7 @@ def apply_gapfilling(df, gapconf, plot=False):
         if en is None:
             en = datetime.now()
         # Get the gapfilling function and arguments
-        gffunc, gfargs = get_gffunction(conf)
+        gffunc, gf_args = get_gffunction(conf)
         print('Fill gap {0}, using {1}.'.format(k, gffunc))
 
         if conf['gap_cols']=='all':
@@ -141,7 +145,7 @@ def apply_gapfilling(df, gapconf, plot=False):
             # Source data must be sent to gffunc, and it must be adjusted first
             # by methods in the gfsource
             source_df = gfsource.get_source_df(c, conf, df.index)
-            df_new[col], gf_bool = gffunc(to_fill, source_df, fillidx, *gfargs)
+            df_new[col], gf_bool = gffunc(to_fill, source_df, fillidx, *gf_args)
             df_isfilled[col] = np.logical_or(gf_bool, df_isfilled[col])
 
         # Plot if requested
