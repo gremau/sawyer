@@ -9,20 +9,23 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from datalog import qafunctions
-import pdb
-
+from IPython.core.debugger import set_trace
 
 def get_qafunction(flag):
+    """
+    Get the qa function and arguments
+    """
+    args = (); kwargs = {}
     if 'qa_function' in flag:
         outfunc = getattr(qafunctions, flag['qa_function'])
         if 'qa_args' in flag:
-            outargs = flag['qa_args']
-        else:
-            outargs = ''
+            args = flag['qa_args']
+        if 'qa_kwargs' in flag:
+            kwargs = flag['qa_kwargs']
     else:
         outfunc = getattr(qafunctions, 'mask_by_datetime')
-        outargs = ''
-    return [outfunc, outargs]
+
+    return [outfunc, args, kwargs]
 
 def apply_qa_flags(df, flags):
     """
@@ -60,7 +63,7 @@ def apply_qa_flags(df, flags):
         en = flag['end']
         if en is None:
             en = datetime.now()
-        qafunc, qaargs = get_qafunction(flag)
+        qafunc, qa_args, qa_kwargs = get_qafunction(flag)
         print('Apply QA flag {0}, using {1}.'.format(k, qafunc))
         if flag['columns']=='all':
             # If "all" columns to be flagged select all
@@ -73,7 +76,8 @@ def apply_qa_flags(df, flags):
         # Get the index range to be flagged
         idxrange = np.logical_and(df.index >= st, df.index <= en)
         # Get the mask for flag k and set appropriate flag
-        df_new, mask_k, rm = qafunc(df_new, idxrange, colrange, *qaargs)
+        df_new, mask_k, rm = qafunc(df_new, idxrange, colrange,
+                *qa_args, **qa_kwargs)
         # Add mask_k to df_flag and to df_mask if data are to be masked
         df_flag = df_flag.where(mask_k, other=k)
         if rm:

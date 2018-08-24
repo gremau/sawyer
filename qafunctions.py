@@ -6,6 +6,8 @@ function in the flag module. Functions must return a  dataframe (often the
 same as the input), a boolean array mask indicating which dataframe values the
 qa flag points to, and a boolean value indicating whether the flagged data 
 should be masked (True = flag for removal).
+
+TODO - note what should be in args and kwargs of yaml config file
 """
 
 import pandas as pd
@@ -14,7 +16,7 @@ import pdb
 
 nancval = ['NAN', 'NaN', 'Nan', 'nan']
 
-def scale_by_multiplier(df, idxrange, colrange, multiplier):
+def scale_by_multiplier(df, idxrange, colrange, multiplier, **kwargs):
     """
     Scale all values in indicated row and column range by the multiplier
     """
@@ -23,7 +25,7 @@ def scale_by_multiplier(df, idxrange, colrange, multiplier):
     df[mask] = df[mask] * multiplier
     return [df, mask, False]
 
-def mask_by_datetime(df, idxrange, colrange):
+def mask_by_datetime(df, idxrange, colrange, **kwargs):
     """
     Mask all matching idxrange and colrange
     """
@@ -31,7 +33,7 @@ def mask_by_datetime(df, idxrange, colrange):
     mask.loc[idxrange, colrange] = True
     return [df, mask, True]
 
-def mask_by_comparison(df, idxrange, colrange, comparison, cval):
+def mask_by_comparison(df, idxrange, colrange, comparison, cval, **kwargs):
     """
     Mask values in matching idxrange and colrange AND colrange variables
     are above/below cval 
@@ -56,7 +58,7 @@ def mask_by_comparison(df, idxrange, colrange, comparison, cval):
     return [df, mask, True]
 
 def mask_by_comparison_ind(df, idxrange, colrange, indvar,
-        comparison, cval):
+        comparison, cval, **kwargs):
     """
     Mask values in matching idxrange and colrange AND where an independent
     variable (indvar) is above/below cval 
@@ -79,7 +81,7 @@ def mask_by_comparison_ind(df, idxrange, colrange, indvar,
     return [df, mask, True]
 
 def mask_by_rolling_stat(df, idxrange, colrange, indvar, stat,
-        window, comparison, thresh=0):
+        window, comparison, thresh=0, **kwargs):
     """
     Mask values in matching idxrange and colrange AND where an independent
     variable (indvar) is above/below cval 
