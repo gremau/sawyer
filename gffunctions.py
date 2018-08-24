@@ -34,8 +34,11 @@ def fillna(y_gaps, *args, **kwargs):
     https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.fillna.html
     """
     source, fillidx = args[0], args[1]
-
-    return y_gaps.fillna(*args, **kwargs)
+    y_new = y_gaps.copy()
+    #return y_gaps.fillna(*args, **kwargs)
+    y_new[fillidx] = y_gaps[fillidx].fillna(*args, **kwargs)
+    y_predict_fill = np.logical_and(fillidx, np.isnan(y_new))
+    return y_new, y_predict_fill
 
 def interpolate(y_gaps, *args, **kwargs):
     """
@@ -47,7 +50,14 @@ def interpolate(y_gaps, *args, **kwargs):
     
     https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.interpolate.html
     """
-    return y_gaps.interpolate(*args, **kwargs)
+    source, fillidx = args[0], args[1]
+
+    y_new = y_gaps.copy()
+    #return y_gaps.interpolate(*args, **kwargs)
+    y_new[fillidx] = y_gaps[fillidx].interpolate(**kwargs)
+    y_predict_fill = np.logical_and(fillidx, np.isnan(y_new))
+    return y_new, y_predict_fill
+
 
 
 def substitution(y_gaps, *args):
@@ -97,7 +107,6 @@ def linearfit(y_gaps, *args, zero_intcpt=False, **kwargs):
     Mask all matching idxrange and colrange
     """
     source, fillidx = args[0], args[1]
-
     y_out = y_gaps.copy()
     x_src = source.copy()
     #yfillidx = np.isnan(y_gaps)

@@ -25,14 +25,19 @@ class GapfillSource:
                 if 'source' in gapconfs[k]]
         sourcelist = [item for sublist in sourcelist for item in sublist]
         self.sourcelist = set(sourcelist)
-        # Load dataframes for all external sources into a dictionary
-        self.sources = {}
-        for s in self.sourcelist:
-            if s in dio.loggers: # Check if it is a datalogger in this project
-                self.sources[s], _ = dio.get_latest_df(s,
-                        'qa', optmatch='masked')
-            else: # Eventually check for other sources...
-                raise(ValueError('Not a valid datalogger name'))
+        
+        if not self.sourcelist:
+            print('Gapfilling configuration contains no external sources...')
+        else:
+            # Load dataframes for all external sources into a dictionary
+            self.sources = {}
+            self.externalsource = True
+            for s in self.sourcelist:
+                if s in dio.loggers: # Check if datalogger is in this project
+                    self.sources[s], _ = dio.get_latest_df(s, 'qa',
+                            optmatch='masked')
+                else: # Eventually check for other sources...
+                    raise ValueError('Not a valid datalogger name')
 
     def get_source_df(self, colnum, gapconf, targetidx):
         sourcenames = gapconf['source']
@@ -73,15 +78,17 @@ def get_gffunction(gapconf):
     """
     Get the gapfilling function and arguments
     """
-    args = ()
+    args = (); kwargs = {}
     if 'gf_function' in gapconf:
         outfunc = getattr(gffunctions, gapconf['gf_function'])
         if 'gf_args' in gapconf:
             args = gapconf['gf_args']
+        if 'gf_kwargs' in gapconf:
+            kwargs = gapconf['gf_kwargs']
     else:
         outfunc = getattr(gffunctions, 'substitution')
 
-    return [outfunc, args]
+    return [outfunc, args, kwargs]
 
 def apply_gapfilling(df, gapconf, plot=False):
     """
@@ -106,53 +113,66 @@ def apply_gapfilling(df, gapconf, plot=False):
 
     TODO - may want to add a flag for data already missing
     """
-    # Make a copy to be a gapfilled dataframe, a boolean array,
-    # and a flag dataframe
+    # Make a copy to be a gapfilled dataframe and a boolean array
     df_new = df.copy()
     df_isfilled = pd.DataFrame(False, index=df.index, columns=df.columns)
     # Get gapfilling sources
     gfsource = GapfillSource(gapconf)
     # Loop through gapconf
     for k, conf in gapconf.items():
+        getsource=False
         if k in (0, '0'):
             raise ValueError('Gapfill key cannot be zero (0)!')
-        
+        # Get the start and end fill dates
         st = conf['start_fill']
         if st is None:
             st = df.index.min()
         en = conf['end_fill']
         if en is None:
             en = datetime.now()
+        # Get the index range to be filled
+        fillidx = np.logical_and(df.index >= st, df.index <= en)
+
         # Get the gapfilling function and arguments
-        gffunc, gf_args = get_gffunction(conf)
+        gffunc, gf_args, gf_kwargs = get_gffunction(conf)
         print('Fill gap {0}, using {1}.'.format(k, gffunc))
 
         if conf['gap_cols']=='all':
             # If "all" columns to be flagged select all
             colrange = df.columns
+        elif gfsource.externalsource and 'source_cols' in conf:
+            # If calling an external source...
+            if len(conf['source_cols'])==len(conf['gap_cols']):
+                getsource=True
+                # leave gap_cols as is:
+                colrange = conf['gap_cols']
+            else:
+                raise ValueError('gap_cols and source_cols must be same' +
+                'length for external source gapfilling')
         else:
             # Or find dataframe columns matching those in gapconf
             test = [any(s in var for s in conf['gap_cols'])
                     for var in df.columns] 
             colrange = df.columns[test]
-        # Get the index range to be filled
-        fillidx = np.logical_and(df.index >= st, df.index <= en)
-        # Note: conf['to_cols'] and conf['from_cols'] must be the same length
-        # might want to put in a check on this
-        for c, col in enumerate(conf['gap_cols']):
+        # Now loop thorugh    
+        for c, col in enumerate(colrange):
             print('Fill column {0}'.format(col))
             to_fill = df_new[col]
-            # Source data must be sent to gffunc, and it must be adjusted first
-            # by methods in the gfsource
-            source_df = gfsource.get_source_df(c, conf, df.index)
-            df_new[col], gf_bool = gffunc(to_fill, source_df, fillidx, *gf_args)
+            source_df = None
+            if getsource:
+                # Source data must be sent to gffunc, and it must be adjusted
+                # first by methods in the gfsource
+                source_df = gfsource.get_source_df(c, conf, df.index)
+            # Run the gapfilling function    
+            df_new[col], gf_bool = gffunc(to_fill, source_df, fillidx,
+                    *gf_args, **gf_kwargs)
             df_isfilled[col] = np.logical_or(gf_bool, df_isfilled[col])
 
         # Plot if requested
         if plot:
             import matplotlib.pyplot as plt
             fig, ax = plt.subplots(1,1)
-            dpl.gf_var_tsplot(ax, conf['gap_cols'], df, df_new)
+            dpl.gf_var_tsplot(ax, colrange, df, df_new)
             plt.show()
 
     # Rewrite df_flag column names
