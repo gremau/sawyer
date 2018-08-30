@@ -92,26 +92,18 @@ def get_gffunction(gapconf):
 
 def apply_gapfilling(df, gapconf, plot=False):
     """
-    Apply gapfilling to a dataframe. There are two types of operations that can
-    be performed on the input dataframe, depending on the gapfilling
-    configuratioin:
-
-    1. Transform data values based on qa flag input
-    2. Mask data based on qa flag input
+    Apply gapfilling to a dataframe. The incoming dataframe (df) is copied
+    and gaps are filled according to the function and parameters in gapconf.
     
-    These changes are logged in the flag array (df_flag) with a number
-    corresponding to the qa flag in the site configuration files.
+    These changes are recorded in the logical array (df_isfilled)
 
     Args:
         df      : input dataframe
-        gapconf   : qa_flag dictionary from the site's datalog configuration dir
+        gapconf : gapfill dictionary from the appropriate datalog configuration
     Returns:
         Three pandas dataframes with identical dimensions to the input df
-        df_new  : original data with any qa transformations applied
-        df_mask : Mask dataframe containing boolean values (True = remove)
-        df_flag : Flag dataframe with values corresponding to qa flags
-
-    TODO - may want to add a flag for data already missing
+        df_new  : dataframe with any gaps filled using methods in gapconf
+        df_isfilled : logical dataframe indicating filling (True = filled)
     """
     # Make a copy to be a gapfilled dataframe and a boolean array
     df_new = df.copy()
@@ -177,21 +169,28 @@ def apply_gapfilling(df, gapconf, plot=False):
 
     # Rewrite df_flag column names
     df_isfilled.columns = df_isfilled.columns + '_f'
-    return df_new, df_isfilled # df_new[df_mask]=np.nan will apply mask
 
-def fill_dataframe(df, gapconf, plot=False):
+    return df_new, df_isfilled
+
+def fill_logger(lname, plot=False):
     """
-    Get qa dataframes with gapconf appended and values masked
+    Get a gapfilled dataframe for the given logger and a boolean dataframe
+    indicating what data is filled.
 
     Args:
-        df: input dataframe
-        gapconf: gapfill dictionary from the site's datalog configuration dir
+        lname (string): datalogger name
+        plot (bool): if set, make a plot of the gapfilling
     Returns:
-        df_gf       : QA'd dataframe with gapconf appended
-        df_gf_masked: QA'd dataframe with gapconf appended and mask applied
+        df_gf       : gapfilled dataframe
+        df_isfilled : boolean dataframe indicating what values are filled
+        filedate     : datetime object indicating last date of data collection
     """
+
+    # Get most recent raw_std data and merge logger and global flags
+    df, filedate = dio.get_latest_df(lname, 'qa', optmatch='masked')
+    # Get gapfilling configuration
+    gapconf = dio.read_yaml_conf(lname, 'gapfill')
+    # Fill gaps
     df_gf, df_isfilled = apply_gapfilling(df, gapconf, plot=plot)
-    #df_qa_fl = pd.concat([df_qa, df_flag], axis=1)
-    #df_qa_masked = df_qa.copy()
-    #df_qa_masked[df_mask] = np.nan
-    return df_gf, df_isfilled 
+    
+    return df_gf, df_isfilled, filedate

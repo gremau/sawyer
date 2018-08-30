@@ -101,6 +101,7 @@ def qa_logger(lname, df_corr=None, use_global=True):
         df_qa       : QA'd dataframe
         df_qa_masked: QA'd dataframe with mask applied
         df_flag     : dataframe indicating which flags and where applied
+        filedate    : datetime object indicating last date of data collection
     """
     # Load the dataframe or use a corrected dataframe if provided
     if df_corr is not None:
@@ -125,4 +126,6 @@ def qa_logger(lname, df_corr=None, use_global=True):
     df_qa_masked = df_qa.copy()
     df_qa_masked[df_mask] = np.nan
 
-    return df_qa, df_qa_masked, df_flag, max(colldates)
+    filedate = max(colldates)
+
+    return df_qa, df_qa_masked, df_flag, fildedate
