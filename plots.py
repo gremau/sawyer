@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import datalog.dtools as dtool
 import datalog.config as conf
-import pdb
+from IPython.core.debugger import set_trace
 
 class tcol:
     WARNING = '\033[93m'
@@ -26,7 +26,7 @@ def meas_profile_tsfig(df, lname, var, ylabel, strexclude=None, ylimit=None):
     Make a time series plot for sensors in a measurement profile
     """
     # Get measurement dictionary
-    measdict = dtool.measurement_h_v_dict(df.columns, var,
+    measdict = dtool.var_h_v_dict(df.columns, var,
             str_exclude=strexclude)
     nplots = len(measdict.keys())
     # Set up plot
@@ -52,7 +52,7 @@ def meas_profile_scatterfig(df, lname, var, ylabel, strexclude=None,
     Make a scatterplot for sensors in a measurement profile
     """
     # Get measurement dictionary
-    measdict = dtool.measurement_h_v_dict(df.columns, var,
+    measdict = dtool.var_h_v_dict(df.columns, var,
             str_exclude=strexclude)
     nplots = len(measdict.keys())
     # Set up plot
@@ -89,8 +89,8 @@ def qa_var_tsplot(ax, varname, df, df_qa, df_qa_masked):
     ax.plot(df_qa.index, df_qa[varname], '.k', label='QA file data')
     # If there is a shift between them circle it
     test_qa = df[varname] != df_qa[varname]
-    ax.plot(df_qa.index[test_qa], df_qa[varname][test_qa], 'og', mfc='none',
-            mew='0.3', alpha=.5, label='QA shifted values')
+    ax.plot(df_qa.index[test_qa], df_qa[varname][test_qa], 'o', mfc='none',
+            mec='xkcd:neon green', mew='0.3', alpha=.5, label='Shifted in QA')
     # Plot the removed data in red
     test_mask = df_qa_masked[varname] != df_qa[varname]
     ax.plot(df_qa.index[test_mask], df_qa[varname][test_mask], '.r',
@@ -108,10 +108,53 @@ def gf_var_tsplot(ax, varnames, df_qa, df_gf):
     # Plot original data and overlay qa data
     for varname in varnames:
         ax.plot(df_gf.index, df_gf[varname], marker= '.', ls='none',
-                color = 'g', label='Gapfilled')
+                color = 'xkcd:neon green', label='Gapfilled')
         ax.plot(df_qa.index, df_qa[varname], marker='.', ls='none')
         
     #ax.set_ylabel(varname)
     ax.legend()
 
     return ax
+
+def qa_var_tsfig(df, df_qa, df_qamask, lname, var, ylabel, 
+        get_vardict=False, strexclude=None, ylimit=None):
+    """
+    Make a figure that plots the results of the qa process. Either a list of
+    variables to plot can be supplied, or a vardict can be requested, which 
+    will plot one or more profiles of variables.
+    """
+    nfigs = 1
+    # If requested convert var to a var_h_v dict (for measurement profiles)
+    if get_vardict:
+        figs = []
+        # Get the variable h_v dict to set up the number of figs
+        vardict = dtool.var_h_v_dict(df_qa.columns, var,
+            str_exclude=strexclude)
+        nfigs = len(vardict.keys())
+        # For each "h" location (profile) make a figure with subplots for
+        # each "v" location
+        for p, prof in enumerate(sorted(vardict.keys())):
+            nplots = len(vardict[prof])
+            fig, ax = plt.subplots(nplots, figsize=(11.5, 8), sharex=True)
+            if nplots==1: ax = [ax]
+            fig.canvas.set_window_title(lname + ' ' + prof + ' QA timeseries')
+            for v, vert in enumerate(vardict[prof]):
+                varname = prof + '_' + vert
+                qa_var_tsplot(ax[v], varname, df, df_qa, df_qamask)
+                ax[d].set_title(varname)
+                ax[d].set_ylabel(ylabel)
+            figs.append(fig)
+        return figs
+    # Otherwise just plot each supplied variable in a subplot
+    else:
+        nplots = len(var)
+        # Set up plot
+        fig, ax = plt.subplots(nplots, figsize=(11.5, 8), sharex=True)
+        if nplots==1: ax = [ax]
+        fig.canvas.set_window_title(lname + ' QA timeseries') 
+        # Loop through each profile and depth and plot
+        for i, vname in enumerate(var):
+            qa_var_tsplot(ax[i], vname, df, df_qa, df_qamask)
+            ax[i].set_title(vname)
+            ax[i].set_ylabel(ylabel)
+        return fig
