@@ -1,37 +1,56 @@
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import re
 import pdb
 
-def measurement_h_v_dict(cols, meas, str_exclude=None):
+def meas_hvrq(colindex):
+    def retdefault(restr, s):
+        result = re.search(restr, s)
+        if result is None:
+            return ''
+        else:
+            return result.group(0)
+    
+    colnames = colindex.values.tolist()
+    # These 2 lines (using retdefault) return the hvr string in each column
+    hvrq_re = r'_\d{1,4}(_\d{1,4}){1,2}'
+    hvr = [retdefault(hvrq_re, c) for c in colnames]
+    # This will split hvr strings into a list [h, v, r] - SORT OF
+    hvr_split = [i.split('_',2) for i in hvr]
+    pdb.set_trace()
+    return hvr_re
+
+def var_h_v_dict(cols, var, str_exclude=None):
     '''
-    Extract measurement horizontal and vertical location configuration. This
-    relies on column names to follow the 'MEASTYPE_H_V_R' convention
+    Extract horizontal and vertical location configuration for a variable. This
+    relies on column names to follow the 'VAR_H_V_R' convention
     (Horiz, Vert, Rep)
 
     IN:
-        cols: (string list) column names for each measurement
-        meas: (string) the measurement type as represented in column names
+        cols: (string list) column index containing variable names
+        var: (string) the measured variable string to find in cols 
         str_exclude: (string) exclude columns containing this string
     OUT:
-        hv_dict: (dict) dict with vertical location list for each meas_horiz key
+        hv_dict: (dict) dict with vertical location (and rep if present) 
+                 list for each var_h key
     '''
-    # Count underscores in meas variable
-    meas_uscores = meas.count('_')
-    # Match column names with meas variable and split into H and V
+    # Count underscores in var
+    var_uscores = var.count('_')
+    # Match column names with var and split into H and V
     if str_exclude is not None:
-        meas_cols = [c for c in cols if meas + '_' in c and 
+        var_cols = [c for c in cols if var + '_' in c and 
                 str_exclude not in c]
     else:
-        meas_cols = [c for c in cols if meas + '_' in c]
-    horiz = [n.split('_')[1 + meas_uscores] for n in meas_cols]
+        var_cols = [c for c in cols if var + '_' in c]
+    horiz = [n.split('_')[1 + var_uscores] for n in var_cols]
     # Max split preserves suffix
-    vert = [n.split('_', maxsplit=2+meas_uscores)[2+meas_uscores]
-            for n in meas_cols]
-    # Create dictionary - meas_H = keys, V = values
-    hv_dict = {meas + '_' + p:[] for p in set(horiz)}
+    vert = [n.split('_', maxsplit=2+var_uscores)[2+var_uscores]
+            for n in var_cols]
+    # Create dictionary - var_H = keys, V = values
+    hv_dict = {var + '_' + p:[] for p in set(horiz)}
     for i, pnum in enumerate(horiz):
-        hv_dict[meas + '_' + pnum].append(vert[i])
+        hv_dict[var + '_' + pnum].append(vert[i])
 
     return hv_dict
 
@@ -129,6 +148,4 @@ def resample_dataframe_by_col( df, freq='1D', avg_cols=[ 'TA_F'],
         min_resamp, max_resamp ], axis=1 )
 
     return df_resamp
-
-
     
