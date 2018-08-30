@@ -161,11 +161,11 @@ def apply_gapfilling(df, gapconf, plot=False):
             df_isfilled[col] = np.logical_or(gf_bool, df_isfilled[col])
 
         # Plot if requested
-        if plot:
-            import matplotlib.pyplot as plt
-            fig, ax = plt.subplots(1,1)
-            dpl.gf_var_tsplot(ax, colrange, df, df_new)
-            plt.show()
+            if plot:
+                import matplotlib.pyplot as plt
+                fig, ax = plt.subplots(1,1)
+                dpl.gf_var_tsplot(ax, col, df, df_new)
+                plt.show()
 
     # Rewrite df_flag column names
     df_isfilled.columns = df_isfilled.columns + '_f'

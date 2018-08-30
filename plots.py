@@ -100,18 +100,17 @@ def qa_var_tsplot(ax, varname, df, df_qa, df_qa_masked):
 
     return ax
 
-def gf_var_tsplot(ax, varnames, df_qa, df_gf):
+def gf_var_tsplot(ax, varname, df_qa, df_gf):
     """
     Plot a variable showing what has been gapfilled
     """
     #varname_f = varname + '_f'
-    # Plot original data and overlay qa data
-    for varname in varnames:
-        ax.plot(df_gf.index, df_gf[varname], marker= '.', ls='none',
-                color = 'xkcd:neon green', label='Gapfilled')
-        ax.plot(df_qa.index, df_qa[varname], marker='.', ls='none')
-        
-    #ax.set_ylabel(varname)
+    # Plot gapfill data oand overlay qa data
+    ax.plot(df_gf.index, df_gf[varname], marker= '.', ls='none',
+            color = 'xkcd:neon green', label='Gapfilled')
+    ax.plot(df_qa.index, df_qa[varname], marker='.', ls='none',
+            color='k', label='Original')    
+    ax.set_ylabel(varname)
     ax.legend()
 
     return ax
@@ -155,6 +154,49 @@ def qa_var_tsfig(df, df_qa, df_qamask, lname, var, ylabel,
         # Loop through each profile and depth and plot
         for i, vname in enumerate(var):
             qa_var_tsplot(ax[i], vname, df, df_qa, df_qamask)
+            ax[i].set_title(vname)
+            ax[i].set_ylabel(ylabel)
+        return fig
+
+def gf_var_tsfig(df_qa, df_gf, lname, var, ylabel, 
+        get_vardict=False, strexclude=None, ylimit=None):
+    """
+    Make a figure that plots the results of the gapfilling. Either a list of
+    variables to plot can be supplied, or a vardict can be requested, which 
+    will plot one or more profiles of variables.
+    """
+    nfigs = 1
+    # If requested convert var to a var_h_v dict (for measurement profiles)
+    if get_vardict:
+        figs = []
+        # Get the variable h_v dict to set up the number of figs
+        vardict = dtool.var_h_v_dict(df_qa.columns, var,
+            str_exclude=strexclude)
+        nfigs = len(vardict.keys())
+        # For each "h" location (profile) make a figure with subplots for
+        # each "v" location
+        for p, prof in enumerate(sorted(vardict.keys())):
+            nplots = len(vardict[prof])
+            fig, ax = plt.subplots(nplots, figsize=(11.5, 8), sharex=True)
+            if nplots==1: ax = [ax]
+            fig.canvas.set_window_title(lname + ' ' + prof + ' GF timeseries')
+            for v, vert in enumerate(vardict[prof]):
+                varname = prof + '_' + vert
+                gf_var_tsplot(ax[v], varname, df_qa, df_gf)
+                ax[v].set_title(varname)
+                ax[v].set_ylabel(ylabel)
+            figs.append(fig)
+        return figs
+    # Otherwise just plot each supplied variable in a subplot
+    else:
+        nplots = len(var)
+        # Set up plot
+        fig, ax = plt.subplots(nplots, figsize=(11.5, 8), sharex=True)
+        if nplots==1: ax = [ax]
+        fig.canvas.set_window_title(lname + ' GF timeseries') 
+        # Loop through each profile and depth and plot
+        for i, vname in enumerate(var):
+            gf_var_tsplot(ax[i], vname, df_qa, df_gf)
             ax[i].set_title(vname)
             ax[i].set_ylabel(ylabel)
         return fig
