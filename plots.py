@@ -141,8 +141,8 @@ def qa_var_tsfig(df, df_qa, df_qamask, lname, var, ylabel,
             for v, vert in enumerate(vardict[prof]):
                 varname = prof + '_' + vert
                 qa_var_tsplot(ax[v], varname, df, df_qa, df_qamask)
-                ax[d].set_title(varname)
-                ax[d].set_ylabel(ylabel)
+                ax[v].set_title(varname)
+                ax[v].set_ylabel(ylabel)
             figs.append(fig)
         return figs
     # Otherwise just plot each supplied variable in a subplot

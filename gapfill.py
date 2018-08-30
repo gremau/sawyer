@@ -37,7 +37,7 @@ class GapfillSource:
                     self.sources[s], _ = dio.get_latest_df(s, 'qa',
                             optmatch='masked')
                 else: # Eventually check for other sources...
-                    raise ValueError('Not a valid datalogger name')
+                    raise ValueError('Source not configured for gapfilling!')
 
     def get_source_df(self, colnum, gapconf, targetidx):
         sourcenames = gapconf['source']

@@ -21,6 +21,13 @@ datadirs = conf.datapaths
 filename_dt_rexp = conf.filename_dt_rexp
 filename_dt_fmt = conf.filename_dt_fmt
 
+def validate_logger(lname):
+    if lname in loggers:
+        pass
+    else:
+        print('Available logger names are {0}'.format(loggers))
+        raise ValueError('Not a valid datalogger name for this configuration')
+
 def get_datadir(lname, datalevel='qa'):
     """
     Retrieve correct directory path for given logger and data level
@@ -33,6 +40,8 @@ def get_datadir(lname, datalevel='qa'):
         p (string): a validated path name
         
     """
+    # First validate logger name
+    validate_logger(lname)
     if datalevel in datadirs.keys():
         p = datadirs[datalevel].replace('{LOGGER}', lname)
         if not os.path.isdir(p):
@@ -166,7 +175,9 @@ def read_yaml_conf(lname, yamltype, confdir=conf_path):
     if lname is 'all':
         yamlfile = os.path.join(confdir, yamltype + '.yaml')
     else:
+        validate_logger(lname)
         yamlfile = os.path.join(confdir, lname, yamltype + '.yaml')
+
     if os.path.isfile(yamlfile):
         stream = open(yamlfile, 'r')
         yamlf = yaml.load(stream)
