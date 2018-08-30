@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from datalog import qafunctions
+import datalog.io as dio
 from IPython.core.debugger import set_trace
 
 def get_qafunction(flag):
@@ -87,19 +88,41 @@ def apply_qa_flags(df, flags):
     df_flag.columns = df_flag.columns + '_flag'
     return df_new, df_mask, df_flag # df_new[df_mask]=np.nan will apply mask
 
-def qa_dataframes(df, flags):
+def qa_logger(lname, df_corr=None, use_global=True):
     """
-    Get qa dataframes with flags appended and values masked
+    Get qa dataframes with flags appended and values masked for the specified
+    datalogger
 
     Args:
-        df: input dataframe
-        flags: qa_flag dictionary from the site's datalog configuration dir
+        lname (string): datalogger name
+        df_corr (pandas dataframe): apply qa flags to this, usually corrected df
+        use_global (bool): if set, use the global qa flags for the project
     Returns:
-        df_qa       : QA'd dataframe with flags appended
-        df_qa_masked: QA'd dataframe with flags appended and mask applied
+        df_qa       : QA'd dataframe
+        df_qa_masked: QA'd dataframe with mask applied
+        df_flag     : dataframe indicating which flags and where applied
     """
+    # Load the dataframe or use a corrected dataframe if provided
+    if df_corr is not None:
+        # Use the corrected dataframe
+        df = df_corr
+        p = dio.get_datadir(lname, 'raw_std')
+        _, colldates = dio.get_file_list(p, parsedt=True)
+    else:
+        df, colldates = dio.get_latest_df(lname, 'raw_std')
+
+    # Get logger (and global) qa flags and merge them
+    flags = dio.read_yaml_conf(lname, 'qa_flags')
+    gflags = {}
+    if use_global:
+        gflags = dio.read_yaml_conf('all', 'qa_flags')
+    flags = {**flags, **gflags}
+    
+    # Apply qa flags
     df_qa, df_mask, df_flag = apply_qa_flags(df, flags)
-    #df_qa_fl = pd.concat([df_qa, df_flag], axis=1)
+
+    # Create the masked dataframe
     df_qa_masked = df_qa.copy()
     df_qa_masked[df_mask] = np.nan
-    return df_qa, df_qa_masked, df_flag 
+
+    return df_qa, df_qa_masked, df_flag, max(colldates)
