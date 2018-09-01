@@ -1,3 +1,6 @@
+"""
+Various tools for summarizing and transforming data in dataframes
+"""
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -25,7 +28,7 @@ def var_h_v_dict(cols, var, str_exclude=None):
     '''
     Extract horizontal and vertical location configuration for a variable. This
     relies on column names to follow the 'VAR_H_V_R' convention
-    (Horiz, Vert, Rep)
+    (H=Horiz, V=Vert, R=Rep)
 
     IN:
         cols: (string list) column index containing variable names
@@ -56,6 +59,8 @@ def var_h_v_dict(cols, var, str_exclude=None):
 
 def gapfill_series(s_withgaps, s_gapfiller, makeplots=False):
     '''
+    DEPRECATE???
+
     Fill nans in one series with data from another
 
     IN:
@@ -148,4 +153,3 @@ def resample_dataframe_by_col( df, freq='1D', avg_cols=[ 'TA_F'],
         min_resamp, max_resamp ], axis=1 )
 
     return df_resamp
-    

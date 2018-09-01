@@ -1,14 +1,14 @@
 """
-Functions for flagging and masking data. 
+Tools for gapfilling missing data. 
 
-QA functions that can be applied are called from the qafunctions module.
+Gapfill functions that can be applied are called from the gapfunctions module.
 
 """
 
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from datalog import gffunctions
+from datalog import gapfunctions
 import datalog.plots as dpl
 import datalog.io as dio
 from IPython.core.debugger import set_trace

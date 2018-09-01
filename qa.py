@@ -1,8 +1,7 @@
 """
-Functions for flagging and masking data. 
+Functions for QA flagging and masking data. 
 
 QA functions that can be applied are called from the qafunctions module.
-
 """
 
 import pandas as pd

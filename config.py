@@ -32,13 +32,19 @@ conf_flag = False
 import_uplots = False
 
 class tcol:
+    """
+    Simple class defining terminal colors for datalog messages
+    """
     OKGREEN = '\033[92m'
     WARNING = '\033[93m'
     FAIL = '\033[91m'
     ENDC = '\033[0m'
     UNDERLINE = '\033[4m'
 
-# Get the project configuration path
+# Get the project configuration path. If `datalog_config` is in the cwd or its
+# parent, set that as the path and set the conf_flag. Otherwise, ask for a 
+# configuration directory. If none, or an invalid directory is given, a basic,
+# "unspecified" configuration is loaded.
 if os.path.isfile(os.path.join(conf_dir_default, project_c_default)):
     config_path = os.path.join(os.getcwd(), conf_dir_default)
     conf_flag = True
@@ -147,6 +153,7 @@ if conf_flag:
             'io.get_datadir("loggername", "datalevel")' +tcol.ENDC +
             tcol.OKGREEN + ' to return a path \n' + tcol.ENDC)
 else:
+    # The basid, "unspecified" configuration
     print(tcol.WARNING + 'Unspecified project, no datalog configs or paths '
     'available' + tcol.ENDC)
     projectname='Unspecified'
