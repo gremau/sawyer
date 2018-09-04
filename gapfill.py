@@ -2,7 +2,6 @@
 Tools for gapfilling missing data. 
 
 Gapfill functions that can be applied are called from the gapfunctions module.
-
 """
 
 import pandas as pd
@@ -19,6 +18,9 @@ class GapfillSource:
     """
 
     def __init__(self, gapconfs):
+        """
+        Initialize GapfillSource object.
+        """
         # Get a list of all sources in the gapfill.yaml file (exclude items
         # without an external source)
         sourcelist = [gapconfs[k]['source'] for k in gapconfs.keys()
@@ -40,6 +42,9 @@ class GapfillSource:
                     raise ValueError('Source not configured for gapfilling!')
 
     def get_source_df(self, colnum, gapconf, targetidx):
+        """
+        Get data from requested source.
+        """
         sourcenames = gapconf['source']
         sourcecol = gapconf['source_cols'][colnum]
         source_df = pd.DataFrame(index=targetidx)

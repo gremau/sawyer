@@ -13,7 +13,7 @@ from IPython.core.debugger import set_trace
 
 def get_qafunction(flag):
     """
-    Get the qa function and arguments
+    Get the qa function and its arguments
     """
     args = (); kwargs = {}
     if 'qa_function' in flag:

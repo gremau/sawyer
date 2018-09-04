@@ -10,6 +10,9 @@ import datalog.config as conf
 from IPython.core.debugger import set_trace
 
 class tcol:
+    """
+    Simple class for assigning terminal output colors
+    """
     WARNING = '\033[93m'
     ENDC = '\033[0m'
     UNDERLINE = '\033[4m'
@@ -23,7 +26,7 @@ if conf.import_uplots:
 
 def meas_profile_tsfig(df, lname, var, ylabel, strexclude=None, ylimit=None):
     """
-    Make a time series plot for sensors in a measurement profile
+    Make a time series figure for sensors in a measurement profile
     """
     # Get measurement dictionary
     measdict = dtool.var_h_v_dict(df.columns, var,
@@ -49,7 +52,7 @@ def meas_profile_tsfig(df, lname, var, ylabel, strexclude=None, ylimit=None):
 def meas_profile_scatterfig(df, lname, var, ylabel, strexclude=None,
         ylimit=[-155,0]):
     """
-    Make a scatterplot for sensors in a measurement profile
+    Make a scatterplot figure for sensors in a measurement profile
     """
     # Get measurement dictionary
     measdict = dtool.var_h_v_dict(df.columns, var,
@@ -74,6 +77,10 @@ def meas_profile_scatterfig(df, lname, var, ylabel, strexclude=None,
     return fig
 
 def tsfig_add_filedates(fig, filedates):
+    """
+    Add vertical lines indicating a series of dates (usually referring to the
+    date of file collection)
+    """
     for a in fig.axes:
         ymin, ymax = a.get_ylim()
         a.vlines(filedates, ymin, ymax, linestyles='dotted',lw=0.5)

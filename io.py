@@ -22,6 +22,13 @@ filename_dt_rexp = conf.filename_dt_rexp
 filename_dt_fmt = conf.filename_dt_fmt
 
 def validate_logger(lname):
+    """
+    Make sure the datalogger name (lname) is a valid datalogger in the current
+    configuration.
+
+    Raises:
+        ValueError
+    """
     if lname in loggers:
         pass
     else:
@@ -53,6 +60,8 @@ def get_datadir(lname, datalevel='qa'):
 
 def dt_from_filename(filename, rexp=filename_dt_rexp, fmt=filename_dt_fmt):
     """
+    Retrieve a datatime object from a given filename in datalog format
+
     (\d{4}){1}([_-]\d{2}){5}
     """
     srchresult = re.search(rexp, filename)

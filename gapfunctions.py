@@ -1,6 +1,6 @@
 """
 Functions that can be called to gapfill a dataframe. These are generally
-called from the gapfill_series function in the gapfill module. Functions 
+called from the apply_gapfilling function in the gapfill module. Functions 
 must return a dataframe (often the same as the input), and a boolean array mask
 indicating which dataframe values are gapfilled.
 
@@ -58,12 +58,35 @@ def interpolate(y_gaps, *args, **kwargs):
     y_predict_fill = np.logical_and(fillidx, np.isnan(y_new))
     return y_new, y_predict_fill
 
+def scipy_interp1d(y_gaps, *args, **kwargs):
+    """
+    Wrapper for scipy.interpolate.interp1d
+
+    All arguments should go into gf_kwargs in gapfill.yaml
+
+    See documentation at:
+    
+    https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.interp1d.html#scipy.interpolate.interp1d
+
+    IN PROGRESS
+    """
+    import scipy.interpolate.interp1d as i1d
+
+    source, fillidx = args[0], args[1]
+
+    y_new = y_gaps.copy()
+    #return y_gaps.interpolate(*args, **kwargs)
+    y_new[fillidx] = y_gaps[fillidx].interpolate(**kwargs)
+    y_predict_fill = np.logical_and(fillidx, np.isnan(y_new))
+    return y_new, y_predict_fill
 
 
 def substitution(y_gaps, *args):
     """
-    Mask values in matching idxrange and colrange AND colrange variables
-    are above/below cval 
+    Substitute values in source dataframe into gaps in y_gaps 
+    (no transformation).
+
+    IN PROGRESS
     """
     source, fillidx = args[0], args[1]
 
@@ -81,8 +104,10 @@ def substitution(y_gaps, *args):
 
 def midpoint(y_gaps, *args):
     """
-    Mask values in matching idxrange and colrange AND colrange variables
-    are above/below cval 
+    Calculate gapfilling values as the midpoint between two columns in the
+    source dataframe.
+
+    IN PROGRESS
     """
     source, fillidx = args[0], args[1]
     y_out = y_gaps.copy()
@@ -104,7 +129,10 @@ def midpoint(y_gaps, *args):
 
 def linearfit(y_gaps, *args, zero_intcpt=False, **kwargs):
     """
-    Mask all matching idxrange and colrange
+    Calculate linear regression between y_gaps and a source dataframe,
+    predict the gapfilling values using the calculated coefficients.
+
+    this does the regression a couple ways (could be pruned)
     """
     source, fillidx = args[0], args[1]
     y_out = y_gaps.copy()
@@ -143,7 +171,10 @@ def linearfit(y_gaps, *args, zero_intcpt=False, **kwargs):
 
 def linearfit2(y_gaps, *args):
     """
-    Mask all matching idxrange and colrange
+    Calculate linear regression between y_gaps and a source dataframe,
+    predict the gapfilling values using the calculated coefficients.
+
+    This is another method using scipy optimization
     """
     import scipy.optimize as sciop
 
