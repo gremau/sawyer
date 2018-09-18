@@ -22,9 +22,9 @@ class GapfillSource:
         Initialize GapfillSource object.
         """
         # Get a list of all sources in the gapfill.yaml file (exclude items
-        # without an external source)
-        sourcelist = [gapconfs[k]['source'] for k in gapconfs.keys()
-                if 'source' in gapconfs[k]]
+        # without external sources like interp and fillna)
+        sourcelist = [gapconfs[k]['sources'].keys() for k in gapconfs.keys()
+                if 'sources' in gapconfs[k]]
         sourcelist = [item for sublist in sourcelist for item in sublist]
         self.sourcelist = set(sourcelist)
         
@@ -85,7 +85,7 @@ def get_gffunction(gapconf):
     """
     args = (); kwargs = {}
     if 'gf_function' in gapconf:
-        outfunc = getattr(gffunctions, gapconf['gf_function'])
+        outfunc = getattr(gapfunctions, gapconf['gf_function'])
         if 'gf_args' in gapconf:
             args = gapconf['gf_args']
         if 'gf_kwargs' in gapconf:

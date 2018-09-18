@@ -23,7 +23,7 @@ from IPython.core.debugger import set_trace
 
 nancval = ['NAN', 'NaN', 'Nan', 'nan']
 
-def fillna(y_gaps, *args, **kwargs):
+def fillna(y_gaps, fillidx, *args, **kwargs):
     """
     Wrapper for pandas.DataFrame.fillna
 
@@ -40,7 +40,7 @@ def fillna(y_gaps, *args, **kwargs):
     y_predict_fill = np.logical_and(fillidx, np.isnan(y_new))
     return y_new, y_predict_fill
 
-def interpolate(y_gaps, *args, **kwargs):
+def interpolate(y_gaps, fillidx, *args, **kwargs):
     """
     Wrapper for pandas.DataFrame.interpolate
 
@@ -58,7 +58,7 @@ def interpolate(y_gaps, *args, **kwargs):
     y_predict_fill = np.logical_and(fillidx, np.isnan(y_new))
     return y_new, y_predict_fill
 
-def scipy_interp1d(y_gaps, *args, **kwargs):
+def scipy_interp1d(y_gaps, fillidx, *args, **kwargs):
     """
     Wrapper for scipy.interpolate.interp1d
 
@@ -81,7 +81,7 @@ def scipy_interp1d(y_gaps, *args, **kwargs):
     return y_new, y_predict_fill
 
 
-def substitution(y_gaps, *args):
+def substitution(y_gaps, fillidx, *args, **kwargs):
     """
     Substitute values in source dataframe into gaps in y_gaps 
     (no transformation).
@@ -102,7 +102,7 @@ def substitution(y_gaps, *args):
         
     return y_out
 
-def midpoint(y_gaps, *args):
+def midpoint(y_gaps, fillidx, *args, **kwargs):
     """
     Calculate gapfilling values as the midpoint between two columns in the
     source dataframe.
@@ -127,13 +127,15 @@ def midpoint(y_gaps, *args):
     return y_out, ypredict_fill
 
 
-def linearfit(y_gaps, *args, zero_intcpt=False, **kwargs):
+def linearfit(y_gaps, fillidx, *args, **kwargs):
     """
     Calculate linear regression between y_gaps and a source dataframe,
     predict the gapfilling values using the calculated coefficients.
 
     this does the regression a couple ways (could be pruned)
     """
+    zero_intcpt = kwargs.get('zero_intcpt',False)
+    set_trace()
     source, fillidx = args[0], args[1]
     y_out = y_gaps.copy()
     x_src = source.copy()
@@ -169,7 +171,7 @@ def linearfit(y_gaps, *args, zero_intcpt=False, **kwargs):
     return y_out, ypredict_fill
 
 
-def linearfit2(y_gaps, *args):
+def linearfit2(y_gaps, fillidx, *args, **kwargs):
     """
     Calculate linear regression between y_gaps and a source dataframe,
     predict the gapfilling values using the calculated coefficients.
