@@ -22,6 +22,7 @@ import numpy as np
 from IPython.core.debugger import set_trace
 
 nancval = ['NAN', 'NaN', 'Nan', 'nan']
+require_src = ['substitution','midpoint','linearfit','linearfit2']
 
 def fillna(y_gaps, fillidx, *args, **kwargs):
     """
@@ -135,8 +136,7 @@ def linearfit(y_gaps, fillidx, *args, **kwargs):
     this does the regression a couple ways (could be pruned)
     """
     zero_intcpt = kwargs.get('zero_intcpt',False)
-    set_trace()
-    source, fillidx = args[0], args[1]
+    source = args[0]
     y_out = y_gaps.copy()
     x_src = source.copy()
     #yfillidx = np.isnan(y_gaps)
