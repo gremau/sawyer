@@ -177,7 +177,6 @@ def apply_gapfilling(df_in, gapconf, plot=False):
     df_isfilled = pd.DataFrame(False, index=df.index, columns=df.columns)
     # Get gapfilling sources object
     gfsource = GapfillSource(gapconf)
-    gapconfv = validate_gf_conf(gapconf, df.columns)
     # Loop through gapconf
     for k, conf in gapconfv.items():        
         # Get the start and end fill dates
@@ -237,17 +236,14 @@ def fill_logger(lname, plot=False):
         filedate     : datetime object indicating last date of data collection
     """
 
-    # Get most recent raw_std data and merge logger and global flags
+    # Get most recent qa masked data file for logger
     df, filedate = dio.get_latest_df(lname, 'qa', optmatch='masked')
     # Get gapfilling configuration
     gapconf = dio.read_yaml_conf(lname, 'gapfill')
-
-    # THIS IS WHERE A STEP TO VALIDATE THE GAPFILL.YAML SHOULD GO
-    # Correct args for gffunc
-    # gf_cols and source columns match up correctly,
-    # etc.
+    # Validate gapconf
+    gapconfv = validate_gf_conf(gapconf, df.columns)
 
     # Fill gaps
-    df_gf, df_isfilled = apply_gapfilling(df, gapconf, plot=plot)
+    df_gf, df_isfilled = apply_gapfilling(df, gapconfv, plot=plot)
     
     return df_gf, df_isfilled, filedate
