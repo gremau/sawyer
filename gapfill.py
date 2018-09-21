@@ -46,22 +46,21 @@ class GapfillSource:
         Get data from requested source.
         """
         sources = gapconf['sources']
-        #sourcenames = gapconf['source']
-        #sourcecol = gapconf['source_cols'][colnum]
         source_list = []
         source_df = pd.DataFrame(index=targetidx)
         # Multi-source fills send a >1 list of dataframes to gffunc
         if len(sources) > 1:
-            # 
+            # For each source 
             for i, sname in enumerate(sources.keys()):
-                sourcecols = sources.values[i]
+                sourcecols = sources[sname]
                 filldf = self.sources[sname].loc[:,sourcecols[colnum]]
                 filldf.name = sname + '_' + filldf.name
                 source_list.append(source_df.join(filldf))
         # Single source fills send a one dataframe list to gffunc
         else:
-            sourcecol = list(sources.values())[0][colnum]
-            filldf = self.sources[list(sources.keys())[0]].loc[:,sourcecol]
+            sname = list(sources.keys())[0]
+            sourcecol = sources[sname][colnum]
+            filldf = self.sources[sname].loc[:,sourcecol]
             source_list.append(source_df.join(filldf))
         # The source data can be trimmed, which could be useful for linear
         # fits.
@@ -88,9 +87,7 @@ def get_gffunction(gapconf):
     args = (); kwargs = {}
     if 'gf_function' in gapconf:
         outfunc = getattr(gfuncs, gapconf['gf_function'])
-        #if 'gf_args' in gapconf:
-        #    args = gapconf['gf_args']
-        if 'gf_kwargs' in gapconf:
+        if 'gf_kwargs' in gapconf and gapconf['gf_kwargs'] is not None:
             kwargs = gapconf['gf_kwargs']
     else:
         outfunc = getattr(gffunctions, 'substitution')
@@ -107,6 +104,11 @@ def validate_gf_conf(gapconf, gapcolumns):
         # Check for required keys
         required_keys = ('gf_function', 'gap_cols', 'start_fill', 'end_fill')
         assert all (k in conf for k in required_keys)
+        # First - copy gapfilling df column names into conf if requested
+        if conf['gap_cols']=='all':
+            conf['gap_cols'] = gapcolumns
+        # Check if gap_cols could be expanded
+        expand_gfcols = not all([c in gapcolumns for c in conf['gap_cols']])
         # External source(s) required to gapfill?
         # Are they present and same length?
         if conf['gf_function'] in gfuncs.require_src:
@@ -116,11 +118,6 @@ def validate_gf_conf(gapconf, gapcolumns):
             sourcelen = len(sources_columns[0])
             assert all(len(l) == sourcelen for l in sources_columns)
             # A bunch of stuff to expand or fill in columns for gapfilling
-            # First - copy gapfilling df column names into conf if requested
-            if conf['gap_cols']=='all':
-                conf['gap_cols'] = gapcolumns
-            # Check if gap_cols could be expanded
-            expand_gfcols = not all([c in gapcolumns for c in conf['gap_cols']])
             # For one source fills (same source/column fills all gap_cols)
             if sourcelen==1 and len(conf['gap_cols'])==1 and not expand_gfcols:
                 conf['filltype'] = 'one2one'
@@ -150,11 +147,16 @@ def validate_gf_conf(gapconf, gapcolumns):
                     'the configuration file.')
             else:
                 raise ValueError('Unspecified error')
-
-            vgapconf[c] = conf
+        # If no sources required, just expand gap_cols if needed
+        else:
+            test = [any(s in var for s in conf['gap_cols'])
+                    for var in gapcolumns]
+            conf['gap_cols'] = gapcolumns[test]
+        # Copy modified configuration into vgaconf
+        vgapconf[c] = conf
     return vgapconf
 
-def apply_gapfilling(df, gapconf, plot=False):
+def apply_gapfilling(df_in, gapconf, plot=False):
     """
     Apply gapfilling to a dataframe. The incoming dataframe (df) is copied
     and gaps are filled according to the function and parameters in gapconf.
@@ -171,7 +173,7 @@ def apply_gapfilling(df, gapconf, plot=False):
         df_isfilled : logical dataframe indicating filling (True = filled)
     """
     # Make a copy to be a gapfilled dataframe and a boolean array
-    df_new = df.copy()
+    df = df_in.copy()
     df_isfilled = pd.DataFrame(False, index=df.index, columns=df.columns)
     # Get gapfilling sources object
     gfsource = GapfillSource(gapconf)
@@ -195,16 +197,17 @@ def apply_gapfilling(df, gapconf, plot=False):
         # Now loop through    
         for c, col in enumerate(conf['gap_cols']):
             print('Fill column {0}'.format(col))
-            to_fill = df_new[col]
+            gf_sources = []
+            to_fill = df[col]
             # Source data must be sent to gffunc, and it must be adjusted
             # by methods in the gfsource depending on filltype
             if conf['filltype'] == 'one2one' or conf['filltype'] == 'one2many':
-                gf_sources = gfsource.get_source_list(0, conf, df.index)
+                gf_sources = gfsource.get_source_list(0, conf, to_fill.index)
             elif conf['filltype'] == 'many2many':
-                gf_sources = gfsource.get_source_list(c, conf, df.index)
+                gf_sources = gfsource.get_source_list(c, conf, to_fill.index)
             
-            # Run the gapfilling function    
-            df_new[col], gf_bool = gffunc(to_fill, fillidx, *gf_sources,
+            # Run the gapfilling function
+            df[col], gf_bool = gffunc(to_fill, fillidx, *gf_sources,
                     **gf_kwargs)
             df_isfilled[col] = np.logical_or(gf_bool, df_isfilled[col])
 
@@ -212,13 +215,13 @@ def apply_gapfilling(df, gapconf, plot=False):
             if plot:
                 import matplotlib.pyplot as plt
                 fig, ax = plt.subplots(1,1)
-                dpl.gf_var_tsplot(ax, col, df, df_new)
+                dpl.gf_var_tsplot(ax, col, df_in, df)
                 plt.show()
 
     # Rewrite df_flag column names
     df_isfilled.columns = df_isfilled.columns + '_f'
 
-    return df_new, df_isfilled
+    return df, df_isfilled
 
 def fill_logger(lname, plot=False):
     """
