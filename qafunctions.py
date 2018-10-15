@@ -35,8 +35,11 @@ def mask_by_datetime(df, idxrange, colrange, **kwargs):
 
 def mask_by_comparison(df, idxrange, colrange, comparison, cval, **kwargs):
     """
-    Mask values in matching idxrange and colrange AND colrange variables
-    are above/below cval 
+    For each column in colrange, mask values that match the idxrange and 
+    that meet the comparison criteria. In the comparison statement, column
+    values may be screened for being above, below, or equaling a value. They
+    may also be screened for being NaN values (using "equals" and one of the
+    values in nancval).
     """
     if cval in nancval:
         comparison = 'isnan'
@@ -60,8 +63,13 @@ def mask_by_comparison(df, idxrange, colrange, comparison, cval, **kwargs):
 def mask_by_comparison_ind(df, idxrange, colrange, indvar,
         comparison, cval, **kwargs):
     """
-    Mask values in matching idxrange and colrange AND where an independent
-    variable (indvar) is above/below cval 
+    Mask all values that match the idxrange and colrange specified and that
+    that meet the comparison criteria between the "indvar" column and cval.
+    In the comparison statement, column values may be screened where "indvar"
+    column is above, below, or equal to cval. They may also be screened 
+    where "indvar" contains NaN values (using "equals" and one of the values
+    in nancval).
+
     """
     if cval in nancval:
         comparison = 'isnan'

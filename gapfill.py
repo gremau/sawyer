@@ -178,7 +178,7 @@ def apply_gapfilling(df_in, gapconf, plot=False):
     # Get gapfilling sources object
     gfsource = GapfillSource(gapconf)
     # Loop through gapconf
-    for k, conf in gapconfv.items():        
+    for k, conf in gapconf.items():        
         # Get the start and end fill dates
         st = conf['start_fill']
         if st is None:
