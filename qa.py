@@ -127,4 +127,4 @@ def qa_logger(lname, df_corr=None, use_global=True):
 
     filedate = max(colldates)
 
-    return df_qa, df_qa_masked, df_flag, fildedate
+    return df_qa, df_qa_masked, df_flag, filedate
