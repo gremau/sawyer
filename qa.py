@@ -116,6 +116,9 @@ def qa_logger(lname, df_corr=None, use_global=True):
     gflags = {}
     if use_global:
         gflags = dio.read_yaml_conf('all', 'qa_flags')
+        # Remove any global flags that exclude this logger
+        gflags = {key:val for (key,val) in gflags.items() if lname in 
+                val['apply_logger'] or 'all' in val['apply_logger']}
     flags = {**flags, **gflags}
     
     # Apply qa flags
