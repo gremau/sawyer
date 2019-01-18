@@ -128,6 +128,7 @@ def linearfit(y_gaps, fillidx, *args, **kwargs):
 
     this does the regression a couple ways (could be pruned)
     """
+    #set_trace()
     zero_intcpt = kwargs.get('zero_intcpt',False)
     # Should only be one source
     x_src = args[0].copy()
@@ -142,8 +143,11 @@ def linearfit(y_gaps, fillidx, *args, **kwargs):
     commonidx = ~xy.isna().any(1)
     # X present, Y missing (and can be predicted)
     ypredict = np.logical_and(~np.isnan(xy.x), np.isnan(xy.y))
-    # Gapfill (constrained by fillidx)
-    ypredict_fill = np.logical_and(ypredict, fillidx)
+    # Gapfill index (constrained by reindexed ypredict and fillidx)
+    ypredict_reind = ypredict.reindex(y_gaps.index, fill_value=False)
+    ypredict_fill = np.logical_and(ypredict_reind, fillidx)
+    # Get locations in xy to calculate fitted y values
+    xyfit_locs = ypredict_fill.index[ypredict_fill]
     
     if zero_intcpt:
         # This is the least-squares solution for y=a*x (intercept of zero)
@@ -157,10 +161,10 @@ def linearfit(y_gaps, fillidx, *args, **kwargs):
         y2 = xy[commonidx].y
         coeff2, yint, _, _ = np.linalg.lstsq(x2, y2, rcond=None)
         # calculate predicted values
-        y_out[ypredict_fill] = xy[ypredict_fill].x * coeff
+        y_out[ypredict_fill] = xy.loc[xyfit_locs].x * coeff
     else:
         coeff = np.polyfit(xy[commonidx].x, xy[commonidx].y, 1)
-        y_out[ypredict_fill] = np.polyval(coeff, xy[ypredict_fill].x)
+        y_out[ypredict_fill] = np.polyval(coeff, xy.loc[xyfit_locs].x)
 
     return y_out, ypredict_fill
 
