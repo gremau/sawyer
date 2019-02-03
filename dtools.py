@@ -7,6 +7,18 @@ import matplotlib.pyplot as plt
 import re
 import pdb
 
+def regex_colnames(colnames, pattern):
+    ''' 
+    Simple function to search through column name list and return columns
+    that match to one or more regex patterns
+    '''
+    if isinstance(pattern, str):
+        pattern = [pattern]
+    patt = '|'.join(pattern)
+    patt = re.compile(patt)
+    cols = [x for x in colnames if patt.search(x)]
+    return cols
+
 def meas_hvrq(colindex):
     def retdefault(restr, s):
         result = re.search(restr, s)

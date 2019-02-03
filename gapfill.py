@@ -10,6 +10,7 @@ from datetime import datetime
 from datalog import gapfunctions as gfuncs
 import datalog.plots as dpl
 import datalog.io as dio
+import datalog.dtools as tools
 from IPython.core.debugger import set_trace
 
 class GapfillSource:
@@ -149,9 +150,9 @@ def validate_gf_conf(gapconf, gapcolumns):
                 raise ValueError('Unspecified error')
         # If no sources required, just expand gap_cols if needed
         else:
-            test = [any(s in var for s in conf['gap_cols'])
-                    for var in gapcolumns]
-            conf['gap_cols'] = gapcolumns[test]
+            # Or find dataframe columns matching those in qa_flags
+            conf['gap_cols'] = tools.regex_colnames(
+                    gapcolumns, conf['gap_cols'])
         # Copy modified configuration into vgaconf
         vgapconf[c] = conf
     return vgapconf

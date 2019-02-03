@@ -9,6 +9,7 @@ import numpy as np
 from datetime import datetime
 from datalog import qafunctions
 import datalog.io as dio
+import datalog.dtools as tools
 from IPython.core.debugger import set_trace
 
 def get_qafunction(flag):
@@ -70,9 +71,7 @@ def apply_qa_flags(df, flags):
             colrange = df.columns
         else:
             # Or find dataframe columns matching those in qa_flags
-            test = [any(s in var for s in flag['columns'])
-                    for var in df.columns] 
-            colrange = df.columns[test]
+            colrange = tools.regex_colnames(df.columns, flag['columns'])
         # Get the index range to be flagged
         idxrange = np.logical_and(df.index >= st, df.index <= en)
         # Get the mask for flag k and set appropriate flag
