@@ -105,7 +105,7 @@ def gapfill_series(s_withgaps, s_gapfiller, makeplots=False):
 
 def resample_dataframe_by_col( df, freq='1D', avg_cols=[ 'TA_F'],
         min_cols=[ 'TA_F', 'VPD_F' ], max_cols=['LE_F', 'H_F'],
-        sum_cols=[ 'P_F' ]):
+        sum_cols=[ 'P_F' ], label=None):
     """
     Resample a dataframe, specifying resample statistic for given columns.
 
@@ -129,12 +129,12 @@ def resample_dataframe_by_col( df, freq='1D', avg_cols=[ 'TA_F'],
     df_max = df[ max_cols ]
     
     # Resample to daily using sum or mean
-    sums_resamp = df_sum.resample( freq ).sum()
+    sums_resamp = df_sum.resample( freq, label=label ).sum()
     # Sometimes only C fluxes are provided, handle exceptions
     try: 
-        avg_resamp = df_avg.resample( freq ).mean()
-        min_resamp = df_min.resample( freq ).min()
-        max_resamp = df_max.resample( freq ).max()
+        avg_resamp = df_avg.resample( freq, label=label ).mean()
+        min_resamp = df_min.resample( freq, label=label ).min()
+        max_resamp = df_max.resample( freq, label=label ).max()
     
         # Rename the int columns
         #for i in int_cols:
