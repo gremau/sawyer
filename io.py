@@ -13,7 +13,7 @@ import os
 import shutil
 import re
 import datalog.config as conf
-import pdb
+from IPython.core.debugger import set_trace
 
 conf_path = conf.config_path
 loggers = conf.loggers
@@ -47,12 +47,16 @@ def get_datadir(lname, datalevel='qa'):
         p (string): a validated path name
         
     """
-    # First validate logger name
+    # Validate logger name, then find or create correct data directory
     validate_logger(lname)
     if datalevel in datadirs.keys():
         p = datadirs[datalevel].replace('{LOGGER}', lname)
-        if not os.path.isdir(p):
-            raise ValueError('Query produced invalid path {0}'.format(p))
+        try:
+            os.makedirs(p)
+            print('New directory created: ' + p)
+        except FileExistsError:
+            # directory already exists
+            pass
     else:
         raise ValueError('Available data levels/directories are {0}'.format(
             datadirs.keys()))
@@ -186,7 +190,6 @@ def read_yaml_conf(lname, yamltype, confdir=conf_path):
     else:
         validate_logger(lname)
         yamlfile = os.path.join(confdir, lname, yamltype + '.yaml')
-
     if os.path.isfile(yamlfile):
         stream = open(yamlfile, 'r')
         yamlf = yaml.load(stream)
@@ -195,7 +198,10 @@ def read_yaml_conf(lname, yamltype, confdir=conf_path):
         if not(ylogger) or not(ytype):
             raise ValueError('YAML file logger/type mismatch.')
         else:
-            return yamlf['items']
+            if yamlf['items'] is not None:
+                return yamlf['items']
+            else:
+                return {}
     else:
         warn = "Warning: The requested YAML configuration ({0}) not present"
         print(warn.format(yamlfile))
