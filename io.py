@@ -320,6 +320,7 @@ def rename_raw_variables(lname, rawpath, rnpath, confdir=conf_path):
     if bool(yamlf):
         # For each file, loop through each rename event and change headers
         for i, filename in enumerate(files):
+            print(' Renaming headers for: ' + filename)
             findvars, repvars = ([],[])
             # For each rename event, add variable changes to findvar/repvar
             # if the changes occurred after the file datestamp
