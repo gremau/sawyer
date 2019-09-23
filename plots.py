@@ -5,8 +5,8 @@ Plot functions for checking data from a datalogger before or after qa processes
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import datalog.dtools as dtool
-import datalog.config as conf
+import sawyer.dtools as dtool
+import sawyer.config as conf
 from IPython.core.debugger import set_trace
 
 class tcol:

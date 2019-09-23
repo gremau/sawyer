@@ -1,6 +1,6 @@
-# datalog
+# sawyer
 
-The `datalog` python package helps users manage and quality assure incoming time-series data files. The package is built for environmental sensor networks that have one or more dataloggers that periodically return files containing time series data to a specified directory. File management and quality assurance steps are defined using a set of YAML configuration files.
+The `sawyer` python package helps users manage and quality assure incoming time-series data files. The package is built for environmental sensor networks that have one or more dataloggers that periodically return files containing time series data to a specified directory. File management and quality assurance steps are defined using a set of YAML configuration files.
 
 Requires pandas (which brings in NumPy) and pyYAML packages. Matplotlib should be installed to use the plotting functions. If you use the Anaconda package manager these are easy to get.
 

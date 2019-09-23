@@ -13,7 +13,7 @@ yaml=YAML(typ='safe')
 import os
 import shutil
 import re
-import datalog.config as conf
+import sawyer.config as conf
 from IPython.core.debugger import set_trace
 
 conf_path = conf.config_path
@@ -65,7 +65,7 @@ def get_datadir(lname, datalevel='qa'):
 
 def dt_from_filename(filename, rexp=filename_dt_rexp, fmt=filename_dt_fmt):
     """
-    Retrieve a datatime object from a given filename in datalog format
+    Retrieve a datatime object from a given filename in sawyer format
 
     (\d{4}){1}([_-]\d{2}){5}
     """
@@ -144,14 +144,14 @@ def get_latest_df(lname, datalevel, optmatch=None):
                 reindex=raw_freq)
     else:
         f, f_dt = get_latest_file(p, optmatch)
-        df = datalog_in(os.path.join(p, f), lname=lname)
+        df = sawyer_in(os.path.join(p, f), lname=lname)
     
     return df, f_dt
 
 
 #def read_project_conf(confdir=conf_path):
 #    """
-#    Read the project YAML configuration file from the datalog
+#    Read the project YAML configuration file from the sawyer
 #    configuration directory.
 #
 #    Args:
@@ -161,7 +161,7 @@ def get_latest_df(lname, datalevel, optmatch=None):
 #        yamlf (dict): Returns a dictionary of configuration values
 #                      from the YAML file
 #    """
-#    yamlfile = os.path.join(confdir, 'datalog_conf.yaml')
+#    yamlfile = os.path.join(confdir, 'sawyer_conf.yaml')
 #    stream = open(yamlfile, 'r')
 #    yamlf = yaml.load(stream)
 #    return yamlf
@@ -169,7 +169,7 @@ def get_latest_df(lname, datalevel, optmatch=None):
 
 def read_yaml_conf(lname, yamltype, confdir=conf_path):
     """
-    Read a specified YAML configuration file from a given logger's datalog
+    Read a specified YAML configuration file from a given logger's sawyer
     configuration directory. Checks the YAML file meta dictionary to ensure
     configuration is for the correct logger and type.
 
@@ -349,7 +349,7 @@ def rename_raw_variables(lname, rawpath, rnpath, confdir=conf_path):
             shutil.copy(os.path.join(rawpath, filename), rnpath)
 
 
-def datalog_out(df, lname, outpath, datestamp=None,
+def sawyer_out(df, lname, outpath, datestamp=None,
         prefix=None, suffix='00', ext='.txt'):
     """
     Write a delimited text file with a metadata header.
@@ -364,7 +364,7 @@ def datalog_out(df, lname, outpath, datestamp=None,
     outfile = os.path.join(outpath,
             '_'.join(filter(None, strlist)) + ext)
     # Get name of currently running script and git SHA for metadata
-    import __main__ as main # "main.__file__" names script calling datalog_out
+    import __main__ as main # "main.__file__" names script calling sawyer_out
     try:
         scriptname = main.__file__
     except AttributeError:
@@ -374,7 +374,7 @@ def datalog_out(df, lname, outpath, datestamp=None,
     # Write metadata block
     meta_data = pd.Series([('location: {0}'.format(lname)),
         ('date generated: {0}'.format(str(dt.datetime.now()))),
-        ('writer: datalog.iodat.datalog_out'),
+        ('writer: sawyer.io.sawyer_out'),
         ('writer HEAD SHA: {0}'.format(git_sha)),
         ('called from: {0}'.format(scriptname)),
         ('-------------------')])
@@ -384,9 +384,9 @@ def datalog_out(df, lname, outpath, datestamp=None,
         meta_data.to_csv(fout, mode='a', index=False)
         df.to_csv(fout, mode='a', na_rep='NA')
 
-def datalog_in(filename, lname=None):
+def sawyer_in(filename, lname=None):
     """
-    Read an datalog delimited text file with a metadata header. If requested
+    Read an sawyer delimited text file with a metadata header. If requested
     check line 1 of header to ensure data comes from lname.
     """
     def retpr(line):

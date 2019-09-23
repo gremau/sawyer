@@ -110,7 +110,7 @@ def resample_dataframe_by_col( df, freq='1D', avg_cols=[ 'TA_F'],
     Resample a dataframe, specifying resample statistic for given columns.
 
     Args:
-        df          : pandas DataFrame (usually derived from datalog file)
+        df          : pandas DataFrame (usually derived from sawyer file)
         freq        : frequency to resample to (default daily)
         avg_cols    : list of header names (strings) to average
         minmax_cols : list of header names (strings) to convert to min/max

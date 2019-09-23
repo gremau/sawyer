@@ -1,14 +1,14 @@
 """
-Importing this loads configuration data for a datalog project. Configuration
-settings come primarily from the 'datalog_config/datalog_conf.yaml' file found
+Importing this loads configuration data for a sawyer project. Configuration
+settings come primarily from the 'sawyer_config/sawyer_conf.yaml' file found
 either in the current working directory or its parent
 
 Returns:
     projectname (string): name of the project
     loggers (string list): name for each datalogger associated with project 
     config_path (string): path to configuration file
-    defpaths (dict): default data paths specified in datalog_conf.yaml
-    userpaths (dict): user defined data paths specified in datalog_conf.yaml
+    defpaths (dict): default data paths specified in sawyer_conf.yaml
+    userpaths (dict): user defined data paths specified in sawyer_conf.yaml
     datapaths (dict): combined dictionary with defpaths and userpaths items,
                       keys refer to the datatype/subdirectory, values are the 
                       full path to that subdirectory abstracted for logger name
@@ -26,7 +26,7 @@ from ruamel_yaml import YAML
 yaml=YAML(typ='safe')
 import pdb
 
-conf_dir_default = "datalog_config"
+conf_dir_default = "sawyer_config"
 project_c_default = "project.yaml"
 logger_c_default = "loggers.yaml"
 conf_flag = False
@@ -34,7 +34,7 @@ import_uplots = False
 
 class tcol:
     """
-    Simple class defining terminal colors for datalog messages
+    Simple class defining terminal colors for sawyer messages
     """
     OKGREEN = '\033[92m'
     WARNING = '\033[93m'
@@ -42,7 +42,7 @@ class tcol:
     ENDC = '\033[0m'
     UNDERLINE = '\033[4m'
 
-# Get the project configuration path. If `datalog_config` is in the cwd or its
+# Get the project configuration path. If `sawyer_config` is in the cwd or its
 # parent, set that as the path and set the conf_flag. Otherwise, ask for a 
 # configuration directory. If none, or an invalid directory is given, a basic,
 # "unspecified" configuration is loaded.
@@ -55,22 +55,22 @@ elif os.path.isfile(os.path.join('..', conf_dir_default, project_c_default)):
 else:
     import warnings
     warnings.warn(tcol.WARNING + 
-            '\ndatalog_config directory not in current'
+            '\nsawyer_config directory not in current'
             ' or parent directory.\nProject configs not found!' + tcol.ENDC)
     user_inp = input('Would you like to select a project directory? (Y/n)\n')
     if user_inp=='y' or user_inp=='Y' or user_inp=='yes' or user_inp=='Yes':
-        user_dir = input('Enter a valid path to datalog_config directory:')
+        user_dir = input('Enter a valid path to sawyer_config directory:')
         if os.path.isfile(os.path.join(user_dir, project_c_default)):
             print('Using {0} directory'.format(user_dir))
             config_path = user_dir
             conf_flag = True
         else:
-            print('Not a valid datalog config directory. Continuing...')
+            print('Not a valid sawyer config directory. Continuing...')
     else:
         print('No directory given, continuing...')
 
 if conf_flag:
-    print('starting datalog...')
+    print('starting sawyer...')
     # Load the project yaml file
     yaml_file = os.path.join(config_path, project_c_default)
     print("Load project config: {0}".format(yaml_file))
@@ -130,7 +130,7 @@ if conf_flag:
     datapaths.update(userpaths)
     
     # Datalog code path
-    datalog_py_path = os.path.join(base_path, project_c['datalog_py'])
+    sawyer_py_path = os.path.join(base_path, project_c['sawyer_py'])
 
     # Site metadata file
     sitedata_file = os.path.join(base_path, project_c['site_metadata'])
@@ -155,7 +155,7 @@ if conf_flag:
             tcol.OKGREEN + ' to return a path \n' + tcol.ENDC)
 else:
     # The basid, "unspecified" configuration
-    print(tcol.WARNING + 'Unspecified project, no datalog configs or paths '
+    print(tcol.WARNING + 'Unspecified project, no sawyer configs or paths '
     'available' + tcol.ENDC)
     projectname='Unspecified'
     loggers=[]

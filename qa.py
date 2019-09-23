@@ -7,9 +7,9 @@ QA functions that can be applied are called from the qafunctions module.
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from datalog import qafunctions
-import datalog.io as dio
-import datalog.dtools as tools
+from sawyer import qafunctions
+import sawyer.io as dio
+import sawyer.dtools as tools
 from IPython.core.debugger import set_trace
 
 def get_qafunction(flag):
@@ -41,7 +41,7 @@ def apply_qa_flags(df, flags):
 
     Args:
         df      : input dataframe
-        flags   : qa_flag dictionary from the site's datalog configuration dir
+        flags   : qa_flag dictionary from the site's sawyer configuration dir
     Returns:
         Three pandas dataframes with identical dimensions to the input df
         df_new  : original data with any qa transformations applied

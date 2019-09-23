@@ -7,10 +7,10 @@ Gapfill functions that can be applied are called from the gapfunctions module.
 import pandas as pd
 import numpy as np
 from datetime import datetime
-from datalog import gapfunctions as gfuncs
-import datalog.plots as dpl
-import datalog.io as dio
-import datalog.dtools as tools
+from sawyer import gapfunctions as gfuncs
+import sawyer.plots as dpl
+import sawyer.io as dio
+import sawyer.dtools as tools
 from IPython.core.debugger import set_trace
 
 class GapfillSource:
@@ -166,7 +166,7 @@ def apply_gapfilling(df_in, gapconf, plot=False):
 
     Args:
         df      : input dataframe (a qa_masked dataframe for a logger)
-        gapconf : dict from the logger's gapfill.yaml in datalog_config
+        gapconf : dict from the logger's gapfill.yaml in sawyer_config
         plot    : if True, make diagnostic plots for gapfilled column in df 
     Returns:
         Three pandas dataframes with identical dimensions to the input df
