@@ -22,7 +22,8 @@ There are other things this should do:
 """
 
 import os
-import yaml
+from ruamel_yaml import YAML 
+yaml=YAML(typ='safe')
 import pdb
 
 conf_dir_default = "datalog_config"

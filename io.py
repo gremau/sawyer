@@ -8,7 +8,8 @@ import numpy as np
 import datetime as dt
 import pandas as pd
 import subprocess as sp
-import yaml
+from ruamel_yaml import YAML 
+yaml=YAML(typ='safe')
 import os
 import shutil
 import re
