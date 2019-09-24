@@ -69,6 +69,40 @@ def var_h_v_dict(cols, var, str_exclude=None):
 
     return hv_dict
 
+def var_h_v_dict2(cols, var, delim='_', horiz=1, vert=2, rep=3, other=None,
+        maxsplit=None, str_exclude=None):
+    '''
+    Extract horizontal and vertical location configuration for a variable. This
+    is a more flexible function that doesn't expect 'VAR_H_V_R' convention
+    (H=Horiz, V=Vert, R=Rep)
+
+    IN:
+        cols: (string list) column index containing variable names
+        var: (string) the measured variable string to find in cols 
+        str_exclude: (string) exclude columns containing this string
+    OUT:
+        hv_dict: (dict) dict with vertical location (and rep if present) 
+                 list for each var_h key
+    '''
+    # Count underscores in var
+    var_delims = var.count(delim) #do I need to adjust for this?
+    # Match column names with var and split into H and V
+    if str_exclude is not None:
+        var_cols = [c for c in cols if var + '_' in c and 
+                str_exclude not in c]
+    else:
+        var_cols = [c for c in cols if var + '_' in c]
+    horiz = [n.split('_')[horiz] for n in var_cols]
+    # Max split preserves suffix
+    vert = [n.split('_', maxsplit=4)[vert]
+            for n in var_cols]
+    # Create dictionary - var_H = keys, V = values
+    hv_dict = {p:[] for p in set(horiz)}
+    for i, pnum in enumerate(horiz):
+        hv_dict[pnum].append(vert[i])
+
+    return hv_dict
+
 def gapfill_series(s_withgaps, s_gapfiller, makeplots=False):
     '''
     DEPRECATE???

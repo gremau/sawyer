@@ -220,7 +220,7 @@ def calculate_freq(idx):
     return str(round(cfreq)) + "min"
 
 
-def load_toa5(fdatapath) :
+def load_toa5(fdatapath, **kwargs) :
     """
     Load a specified TOA5 datalogger file (a Campbell standard output format)
     and return a pandas DataFrame object. DataFrame has a datetime index
@@ -233,11 +233,15 @@ def load_toa5(fdatapath) :
     """
 
     print('Parsing ' + fdatapath)
+    
+    skip=[0,2,3]
+    if 'skiprows' in kwargs:
+        skip = skip + kwargs.pop('skiprows')
 
     # Parse using Campbell timestamp
-    parsed_df = pd.read_csv(fdatapath, skiprows=( 0,2,3 ), header=0,
+    parsed_df = pd.read_csv(fdatapath, skiprows=skip, header=0,
             parse_dates = { 'Date': [0]}, index_col='Date',
-            na_values=['NaN', 'NAN', 'INF', '-INF'])
+            na_values=['NaN', 'NAN', 'INF', '-INF'], **kwargs)
     
     return parsed_df
 
