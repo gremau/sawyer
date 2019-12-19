@@ -385,7 +385,7 @@ def sawyer_out(df, lname, outpath, datestamp=None,
     with open(outfile, 'w') as fout:
         fout.write('---file metadata---\n')
     #fout.close()
-        meta_data.to_csv(fout, mode='a', index=False)
+        meta_data.to_csv(fout, mode='a', index=False, header=False)
         df.to_csv(fout, mode='a', na_rep='NA')
 
 def sawyer_in(filename, lname=None):

@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import re
-import pdb
+from IPython.core.debugger import set_trace
 
 def regex_colnames(colnames, pattern):
     ''' 
@@ -70,7 +70,7 @@ def var_h_v_dict(cols, var, str_exclude=None):
     return hv_dict
 
 def var_h_v_dict2(cols, var, delim='_', horiz=1, vert=2, rep=3, other=None,
-        maxsplit=None, str_exclude=None):
+        maxsplit=-1, str_exclude=None):
     '''
     Extract horizontal and vertical location configuration for a variable. This
     is a more flexible function that doesn't expect 'VAR_H_V_R' convention
@@ -92,10 +92,12 @@ def var_h_v_dict2(cols, var, delim='_', horiz=1, vert=2, rep=3, other=None,
                 str_exclude not in c]
     else:
         var_cols = [c for c in cols if var + '_' in c]
+
     horiz = [n.split('_')[horiz] for n in var_cols]
     # Max split preserves suffix
-    vert = [n.split('_', maxsplit=4)[vert]
+    vert = [n.split('_', maxsplit=maxsplit)[vert] 
             for n in var_cols]
+
     # Create dictionary - var_H = keys, V = values
     hv_dict = {p:[] for p in set(horiz)}
     for i, pnum in enumerate(horiz):
