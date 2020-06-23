@@ -8,7 +8,7 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 from sawyer import qafunctions
-import sawyer.io as dio
+import sawyer.io as sio
 import sawyer.dtools as tools
 from IPython.core.debugger import set_trace
 
@@ -105,16 +105,16 @@ def qa_logger(lname, df_corr=None, use_global=True):
     if df_corr is not None:
         # Use the corrected dataframe
         df = df_corr
-        p = dio.get_datadir(lname, 'raw_std')
-        _, colldates = dio.get_file_list(p, parsedt=True)
+        p = sio.get_datadir(lname, 'raw_std')
+        _, colldates = sio.get_file_list(p, parsedt=True)
     else:
-        df, colldates = dio.get_latest_df(lname, 'raw_std')
+        df, colldates = sio.get_latest_df(lname, 'raw_std')
 
     # Get logger (and global) qa flags and merge them
-    flags = dio.read_yaml_conf(lname, 'qa_flags')
+    flags = sio.read_yaml_conf(lname, 'qa_flags')
     gflags = {}
     if use_global:
-        gflags = dio.read_yaml_conf('all', 'qa_flags')
+        gflags = sio.read_yaml_conf('all', 'qa_flags')
         # Remove any global flags that exclude this logger
         gflags = {key:val for (key,val) in gflags.items() if lname in 
                 val['apply_logger'] or 'all' in val['apply_logger']}

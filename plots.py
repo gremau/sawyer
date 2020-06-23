@@ -6,8 +6,10 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import sawyer.dtools as dtool
-import sawyer.config as conf
+import sawyer.config as sy
 from IPython.core.debugger import set_trace
+
+conf = sy.conf
 
 class tcol:
     """

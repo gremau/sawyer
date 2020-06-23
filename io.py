@@ -13,14 +13,10 @@ yaml=YAML(typ='safe')
 import os
 import shutil
 import re
-import sawyer.config as conf
+import sawyer.config as sy
 from IPython.core.debugger import set_trace
 
-conf_path = conf.config_path
-loggers = conf.loggers
-datadirs = conf.datapaths
-filename_dt_rexp = conf.filename_dt_rexp
-filename_dt_fmt = conf.filename_dt_fmt
+conf = sy.conf
 
 def validate_logger(lname):
     """
@@ -30,10 +26,10 @@ def validate_logger(lname):
     Raises:
         ValueError
     """
-    if lname in loggers:
+    if lname in conf.loggers:
         pass
     else:
-        print('Available logger names are {0}'.format(loggers))
+        print('Available logger names are {0}'.format(conf.loggers))
         raise ValueError('Not a valid datalogger name for this configuration')
 
 def get_datadir(lname, datalevel='qa'):
@@ -50,8 +46,8 @@ def get_datadir(lname, datalevel='qa'):
     """
     # Validate logger name, then find or create correct data directory
     validate_logger(lname)
-    if datalevel in datadirs.keys():
-        p = datadirs[datalevel].replace('{LOGGER}', lname)
+    if datalevel in conf.datapaths.keys():
+        p = conf.datapaths[datalevel].replace('{LOGGER}', lname)
         try:
             os.makedirs(p)
             print('New directory created: ' + p)
@@ -60,10 +56,11 @@ def get_datadir(lname, datalevel='qa'):
             pass
     else:
         raise ValueError('Available data levels/directories are {0}'.format(
-            datadirs.keys()))
+            conf.datapaths.keys()))
     return p
 
-def dt_from_filename(filename, rexp=filename_dt_rexp, fmt=filename_dt_fmt):
+def dt_from_filename(filename, rexp=conf.filename_dt_rexp,
+        fmt=conf.filename_dt_fmt):
     """
     Retrieve a datatime object from a given filename in sawyer format
 
@@ -149,7 +146,7 @@ def get_latest_df(lname, datalevel, optmatch=None):
     return df, f_dt
 
 
-#def read_project_conf(confdir=conf_path):
+#def read_project_conf(confdir=conf.spath):
 #    """
 #    Read the project YAML configuration file from the sawyer
 #    configuration directory.
@@ -167,7 +164,7 @@ def get_latest_df(lname, datalevel, optmatch=None):
 #    return yamlf
 
 
-def read_yaml_conf(lname, yamltype, confdir=conf_path):
+def read_yaml_conf(lname, yamltype, confdir=conf.spath):
     """
     Read a specified YAML configuration file from a given logger's sawyer
     configuration directory. Checks the YAML file meta dictionary to ensure
@@ -305,7 +302,7 @@ def reindex_to(df, freq_in='10T'):
     return ridf
 
 
-def rename_raw_variables(lname, rawpath, rnpath, confdir=conf_path):
+def rename_raw_variables(lname, rawpath, rnpath, confdir=conf.spath):
     """
     Rename raw datalogger variables according to YAML configuration file
 
@@ -362,7 +359,7 @@ def sawyer_out(df, lname, outpath, datestamp=None,
     suffix = suffix.replace("_", "")
 
     if datestamp is not None:
-        datestamp = datestamp.strftime(filename_dt_fmt)
+        datestamp = datestamp.strftime(conf.filename_dt_fmt)
     # Put together the output file name
     strlist = [prefix, lname, datestamp, suffix]
     outfile = os.path.join(outpath,
