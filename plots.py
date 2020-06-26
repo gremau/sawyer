@@ -9,8 +9,6 @@ import sawyer.dtools as dtool
 import sawyer.config as sy
 from IPython.core.debugger import set_trace
 
-conf = sy.conf
-
 class tcol:
     """
     Simple class for assigning terminal output colors
@@ -19,7 +17,7 @@ class tcol:
     ENDC = '\033[0m'
     UNDERLINE = '\033[4m'
 
-if conf.import_uplots:
+if sy.conf.import_uplots:
     import userplots as u
     print(tcol.WARNING + "Importing user plots as submodule `u`: call " +
             tcol.ENDC + tcol.UNDERLINE + "plots.u.<functionname>" + tcol.ENDC +
@@ -42,7 +40,7 @@ def meas_profile_tsfig(df, lname, var, ylabel, strexclude=None, ylimit=None):
     for i, pnum in enumerate(sorted(measdict.keys())):
         for d in measdict[pnum]:
             colname = pnum + '_' + d
-            ax[i].plot( df.index, df[colname], lw=1.25, label=str(d)+'cm' )
+            ax[i].plot( df.index, df[colname], marker='.', lw=1.25, label=str(d)+'cm' )
         ax[i].legend(loc='upper left', bbox_to_anchor=(0, 1.05),
                 ncol=4, fontsize=10)
         if ylimit is not None:

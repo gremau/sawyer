@@ -1,10 +1,12 @@
 """
-Importing this loads configuration data for a sawyer project. Configuration
-settings come primarily from the 'sawyer_config' directory found
+Importing this loads configuration data for a sawyer project.By default,
+configuration settings come from the 'sawyer_config' directory found
 either in the current working directory or its parent. A different
-directory location can be given.
+directory location can be given and the configuration can be overwritten
+if desired. This should be imported to all sawyer modules that need access
+to project configuration
 
-Return a 'conf' object containing:
+Creates a 'conf' object (SawyerConfig class) containing:
     projectname (string): name of the project
     loggers (string list): name for each datalogger associated with project 
     spath (string): path to configuration file
@@ -33,6 +35,18 @@ conf_dir_default = "sawyer_config"
 project_c_default = "project.yaml"
 logger_c_default = "loggers.yaml"
 
+# Get the project configuration path. If `sawyer_config` is in the cwd or its
+# parent, set that as the path and set the conf_flag. Otherwise, a basic,
+# "unspecified" configuration is loaded.
+if os.path.isfile(os.path.join(conf_dir_default, project_c_default)):
+    parent_spath = os.path.join(os.getcwd(), conf_dir_default)
+elif os.path.isfile(os.path.join('..', conf_dir_default, project_c_default)):
+    parent_spath = os.path.join(os.path.dirname(os.getcwd()), conf_dir_default)
+else:
+    parent_spath = None
+    warnings.warn('sawyer_config directory was not found in the current or' 
+            'parent directory')
+
 # Class for color terminal output
 class tcol:
     """
@@ -47,15 +61,22 @@ class tcol:
 
 class SawyerConfig(object):
     """
-    sawyer configuration class
+    Sawyer configuration class
     """
 
     def __init__(self, *args):
+        """
+        Create a SawyerConfig object
+        """
         self.import_uplots = False
         # Initialize path
-        if len(args) == 0:
+        if len(args) == 0 and parent_spath is None:
             print('No path given. Initializing empty sawyer configuration')
             self.spath = None
+        elif len(args) == 0 and parent_spath is not None:
+            print('Initializing sawyer configuration at path {0}'.format(
+                parent_spath))
+            self.spath = parent_spath
         else:
             print('Initializing sawyer configuration at path {0}'.format(
                 args[0]))
@@ -66,20 +87,31 @@ class SawyerConfig(object):
         """
         Method to assign the class 'spath' variable and fetch the configuration
         """
-        if len(args) > 0:
+        if len(args) > 0 and self.spath is not None:
+            change = input('Are you sure you want to overwrite the '
+                    'configuration from {0}'.format(self.spath) + ' ??? ')
+            if (change=='y' or change=='Y' or change=='yes' or change=='Yes'):
+                print('Fetching sawyer configurations at {0}'.format(args[0]))
+                self.spath = args[0]
+                self.fetch_config()
+            else:
+                print('Aborted')
+
+        elif len(args) > 0 and self.spath is None:
             print('Fetching sawyer configurations at {0}'.format(args[0]))
             self.spath = args[0]
             self.fetch_config()
+
         elif self.spath is None:
             print(tcol.WARNING + 'Unspecified path, no sawyer configurations '
                 'will be available' + tcol.ENDC)
             print(tcol.WARNING + 'A valid sawyer configuration can be added ' 
-                    'with  ' + tcol.UNDERLINE + 'get_config(<path>)' +
-                    tcol.ENDC)
+                    'with  ' + tcol.UNDERLINE + '<io module name>.get_config'
+                    '(<path>)' + tcol.ENDC)
             self.projectname='Unspecified'
             self.loggers=[]
             self.logger_c={}
-            self.spath=''
+            self.spath=None
             self.defpaths={}
             self.userpaths={}
             self.datapaths={}
@@ -204,19 +236,6 @@ class SawyerConfig(object):
             # Warn that an invalid sawyer_config path was given
             warnings.warn('This is not a valid sawyer_config directory')
 
-# Get the project configuration path. If `sawyer_config` is in the cwd or its
-# parent, set that as the path and set the conf_flag. Otherwise, a basic,
-# "unspecified" configuration is loaded.
-if os.path.isfile(os.path.join(conf_dir_default, project_c_default)):
-    spath = os.path.join(os.getcwd(), conf_dir_default)
-    conf = SawyerConfig(spath)
-    conf.get_config()
-elif os.path.isfile(os.path.join('..', conf_dir_default, project_c_default)):
-    spath = os.path.join(os.path.dirname(os.getcwd()), conf_dir_default)
-    conf = SawyerConfig(spath)
-    conf.get_config()
-else:
-    warnings.warn('sawyer_config directory is not in '
-            'current or parent directory')
-    conf = SawyerConfig()
-    conf.get_config()
+# Create the SawyerConfig object
+conf = SawyerConfig()
+conf.get_config()

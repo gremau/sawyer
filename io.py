@@ -16,7 +16,12 @@ import re
 import sawyer.config as sy
 from IPython.core.debugger import set_trace
 
-conf = sy.conf
+def get_config(path):
+    """
+    Access the get_config method to change SawyerConfig configs from
+    this namespace
+    """
+    sy.conf.get_config(path)
 
 def validate_logger(lname):
     """
@@ -26,10 +31,10 @@ def validate_logger(lname):
     Raises:
         ValueError
     """
-    if lname in conf.loggers:
+    if lname in sy.conf.loggers:
         pass
     else:
-        print('Available logger names are {0}'.format(conf.loggers))
+        print('Available logger names are {0}'.format(sy.conf.loggers))
         raise ValueError('Not a valid datalogger name for this configuration')
 
 def get_datadir(lname, datalevel='qa'):
@@ -46,8 +51,8 @@ def get_datadir(lname, datalevel='qa'):
     """
     # Validate logger name, then find or create correct data directory
     validate_logger(lname)
-    if datalevel in conf.datapaths.keys():
-        p = conf.datapaths[datalevel].replace('{LOGGER}', lname)
+    if datalevel in sy.conf.datapaths.keys():
+        p = sy.conf.datapaths[datalevel].replace('{LOGGER}', lname)
         try:
             os.makedirs(p)
             print('New directory created: ' + p)
@@ -56,16 +61,20 @@ def get_datadir(lname, datalevel='qa'):
             pass
     else:
         raise ValueError('Available data levels/directories are {0}'.format(
-            conf.datapaths.keys()))
+            sy.conf.datapaths.keys()))
     return p
 
-def dt_from_filename(filename, rexp=conf.filename_dt_rexp,
-        fmt=conf.filename_dt_fmt):
+def dt_from_filename(filename, rexp=None, fmt=None):
     """
     Retrieve a datatime object from a given filename in sawyer format
 
     (\d{4}){1}([_-]\d{2}){5}
     """
+    if rexp is None:
+        rexp = sy.conf.filename_dt_rexp
+    if fmt is None:
+        fmt = sy.conf.filename_dt_fmt
+    # Regexp search
     srchresult = re.search(rexp, filename)
     if srchresult is None:
         return None
@@ -135,7 +144,7 @@ def get_latest_df(lname, datalevel, optmatch=None):
     p = get_datadir(lname, datalevel)
 
     if 'raw' in datalevel:
-        raw_freq = conf.logger_c[lname]['rawfreq']
+        raw_freq = sy.conf.logger_c[lname]['rawfreq']
         fs, f_dt = get_file_list(p, optmatch=optmatch, parsedt=True)
         df = concat_raw_files(fs, optmatch=optmatch, iofunc=load_toa5,
                 reindex=raw_freq)
@@ -146,7 +155,7 @@ def get_latest_df(lname, datalevel, optmatch=None):
     return df, f_dt
 
 
-#def read_project_conf(confdir=conf.spath):
+#def read_project_conf(confdir=sy.conf.spath):
 #    """
 #    Read the project YAML configuration file from the sawyer
 #    configuration directory.
@@ -164,7 +173,7 @@ def get_latest_df(lname, datalevel, optmatch=None):
 #    return yamlf
 
 
-def read_yaml_conf(lname, yamltype, confdir=conf.spath):
+def read_yaml_conf(lname, yamltype, confdir=None):
     """
     Read a specified YAML configuration file from a given logger's sawyer
     configuration directory. Checks the YAML file meta dictionary to ensure
@@ -183,6 +192,8 @@ def read_yaml_conf(lname, yamltype, confdir=conf.spath):
         ValueError: Raises ValueError if the lname or yamltype parameters
                     do not match those found in the yaml file
     """
+    if confdir is None:
+        confdir = sy.conf.spath
     if lname is 'all':
         yamlfile = os.path.join(confdir, yamltype + '.yaml')
     else:
@@ -302,7 +313,7 @@ def reindex_to(df, freq_in='10T'):
     return ridf
 
 
-def rename_raw_variables(lname, rawpath, rnpath, confdir=conf.spath):
+def rename_raw_variables(lname, rawpath, rnpath, confdir=None):
     """
     Rename raw datalogger variables according to YAML configuration file
 
@@ -315,6 +326,9 @@ def rename_raw_variables(lname, rawpath, rnpath, confdir=conf.spath):
     Returns:
         Does not return anything but writes new files in rnpath
     """
+    if confdir is None:
+        confdir = sy.conf.spath
+
     # Get var_rename configuration file for logger
     yamlf = read_yaml_conf(lname, 'var_rename', confdir=confdir)
     # Get list of filenames and their file datestamps from the raw directory
@@ -359,7 +373,7 @@ def sawyer_out(df, lname, outpath, datestamp=None,
     suffix = suffix.replace("_", "")
 
     if datestamp is not None:
-        datestamp = datestamp.strftime(conf.filename_dt_fmt)
+        datestamp = datestamp.strftime(sy.conf.filename_dt_fmt)
     # Put together the output file name
     strlist = [prefix, lname, datestamp, suffix]
     outfile = os.path.join(outpath,
