@@ -9,7 +9,7 @@ import numpy as np
 from datetime import datetime
 from sawyer import gapfunctions as gfuncs
 import sawyer.plots as dpl
-import sawyer.io as dio
+import sawyer.io as sio
 import sawyer.dtools as tools
 from IPython.core.debugger import set_trace
 
@@ -36,8 +36,8 @@ class GapfillSource:
             self.sources = {}
             self.externalsource = True
             for s in self.sourcelist:
-                if s in dio.loggers: # Check if datalogger is in this project
-                    self.sources[s], _ = dio.get_latest_df(s, 'qa',
+                if s in sio.sy.conf.loggers: # Check if datalogger is in project
+                    self.sources[s], _ = sio.get_latest_df(s, 'qa',
                             optmatch='masked')
                 else: # Eventually check for other sources...
                     raise ValueError('Source not configured for gapfilling!')
@@ -238,9 +238,9 @@ def fill_logger(lname, plot=False):
     """
 
     # Get most recent qa masked data file for logger
-    df, filedate = dio.get_latest_df(lname, 'qa', optmatch='masked')
+    df, filedate = sio.get_latest_df(lname, 'qa', optmatch='masked')
     # Get gapfilling configuration
-    gapconf = dio.read_yaml_conf(lname, 'gapfill')
+    gapconf = sio.read_yaml_conf(lname, 'gapfill')
     # Validate gapconf
     gapconfv = validate_gf_conf(gapconf, df.columns)
 
