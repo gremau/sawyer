@@ -35,7 +35,7 @@ def meas_profile_tsfig(df, lname, var, ylabel, strexclude=None, ylimit=None):
     # Set up plot
     fig, ax = plt.subplots(nplots, figsize=(11.5, 8), sharex=True)
     if nplots==1: ax = [ax]
-    fig.canvas.set_window_title(lname + ' ' + var + ' timeseries') 
+    fig.canvas.manager.set_window_title(lname + ' ' + var + ' timeseries') 
     # Loop through each profile and depth and plot
     for i, pnum in enumerate(sorted(measdict.keys())):
         for d in measdict[pnum]:
@@ -61,7 +61,7 @@ def meas_profile_scatterfig(df, lname, var, ylabel, strexclude=None,
     # Set up plot
     fig, ax = plt.subplots(1, nplots, figsize=(7, 5), sharey=True)
     if nplots==1: ax = [ax]
-    fig.canvas.set_window_title(lname + ' ' + var + ' profile') 
+    fig.canvas.manager.set_window_title(lname + ' ' + var + ' profile') 
     # Loop through each profile and depth and plot againt depth
     for i, pnum in enumerate(sorted(measdict.keys())):
         for d in measdict[pnum]:
@@ -143,7 +143,7 @@ def qa_var_tsfig(df, df_qa, df_qamask, lname, var, ylabel,
             nplots = len(vardict[prof])
             fig, ax = plt.subplots(nplots, figsize=(11.5, 8), sharex=True)
             if nplots==1: ax = [ax]
-            fig.canvas.set_window_title(lname + ' ' + prof + ' QA timeseries')
+            fig.canvas.manager.set_window_title(lname + ' ' + prof + ' QA timeseries')
             for v, vert in enumerate(vardict[prof]):
                 varname = prof + '_' + vert
                 qa_var_tsplot(ax[v], varname, df, df_qa, df_qamask)
@@ -157,7 +157,7 @@ def qa_var_tsfig(df, df_qa, df_qamask, lname, var, ylabel,
         # Set up plot
         fig, ax = plt.subplots(nplots, figsize=(11.5, 8), sharex=True)
         if nplots==1: ax = [ax]
-        fig.canvas.set_window_title(lname + ' QA timeseries') 
+        fig.canvas.manager.set_window_title(lname + ' QA timeseries') 
         # Loop through each profile and depth and plot
         for i, vname in enumerate(var):
             qa_var_tsplot(ax[i], vname, df, df_qa, df_qamask)
@@ -186,7 +186,7 @@ def gf_var_tsfig(df_qa, df_gf, lname, var, ylabel,
             nplots = len(vardict[prof])
             fig, ax = plt.subplots(nplots, figsize=(11.5, 8), sharex=True)
             if nplots==1: ax = [ax]
-            fig.canvas.set_window_title(lname + ' ' + prof + ' GF timeseries')
+            fig.canvas.manager.set_window_title(lname + ' ' + prof + ' GF timeseries')
             for v, vert in enumerate(vardict[prof]):
                 varname = prof + '_' + vert
                 gf_var_tsplot(ax[v], varname, df_qa, df_gf)
@@ -200,7 +200,7 @@ def gf_var_tsfig(df_qa, df_gf, lname, var, ylabel,
         # Set up plot
         fig, ax = plt.subplots(nplots, figsize=(11.5, 8), sharex=True)
         if nplots==1: ax = [ax]
-        fig.canvas.set_window_title(lname + ' GF timeseries') 
+        fig.canvas.manager.set_window_title(lname + ' GF timeseries') 
         # Loop through each profile and depth and plot
         for i, vname in enumerate(var):
             gf_var_tsplot(ax[i], vname, df_qa, df_gf)
