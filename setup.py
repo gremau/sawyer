@@ -20,7 +20,7 @@ setup(
     version='2021.1b1',
     packages=find_packages(include=['sawyer', 'sawyer.*']),
     install_requires=[
-        'ruamel_yaml',
+        'ruamel.yaml',
         'pandas',
         'matplotlib']
     )
