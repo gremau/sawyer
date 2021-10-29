@@ -9,7 +9,7 @@ import datetime as dt
 import pandas as pd
 import subprocess as sp
 from ruamel.yaml import YAML 
-#yaml=YAML(typ='safe')
+yaml=YAML(typ='safe')
 import os
 import shutil
 import re

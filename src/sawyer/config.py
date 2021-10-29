@@ -27,7 +27,7 @@ There are other things this should do:
 import os
 import warnings
 from ruamel.yaml import YAML 
-#yaml=YAML(typ='safe')
+yaml=YAML(typ='safe')
 import pdb
 
 # Initialize some default path names
