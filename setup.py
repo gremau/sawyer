@@ -18,7 +18,7 @@ setup(
     description='manage and quality-assure data from dataloggers and environmental sensor networks',
     long_description=long_description,
     version='2021.1b1',
-    packages=find_packages(include=['src', 'src.*']),
+    packages=find_packages(include=['sawyer', 'sawyer.*']),
     install_requires=[
         'ruamel_yaml',
         'pandas',
