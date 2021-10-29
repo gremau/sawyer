@@ -15,8 +15,7 @@ long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
     name='sawyer',
-    description='manage and quality-assure data from dataloggers and 
-    environmental sensor networks',
+    description='manage and quality-assure data from dataloggers and environmental sensor networks',
     long_description=long_description,
     version='2021.1b1',
     packages=find_packages(include=['src', 'src.*']),
