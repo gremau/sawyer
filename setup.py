@@ -14,7 +14,7 @@ here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / 'README.md').read_text(encoding='utf-8')
 
 setup(
-    name='jupyter',
+    name='sawyer',
     description='manage and quality-assure data from dataloggers and 
     environmental sensor networks',
     long_description=long_description,
@@ -23,7 +23,5 @@ setup(
     install_requires=[
         'ruamel_yaml',
         'pandas',
-        'matplotlib'
-    ]
-)
-
+        'matplotlib']
+    )
