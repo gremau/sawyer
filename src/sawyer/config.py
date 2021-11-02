@@ -1,4 +1,5 @@
-"""
+""" Defind and create a sawyer configuration
+
 Importing this loads configuration data for a sawyer project.By default,
 configuration settings come from the 'sawyer_config' directory found
 either in the current working directory or its parent. A different
@@ -144,7 +145,6 @@ class SawyerConfig(object):
             projectname = project_c['projectname']
             print(tcol.OKGREEN + '\nProject name: ' +
                     tcol.ENDC + '{0}'.format(projectname))
-
             # Project loggers
             loggers = [*logger_c.keys()]
             print(tcol.OKGREEN + 
@@ -158,7 +158,6 @@ class SawyerConfig(object):
             # Get valid paths from project_c
             # NOTE - If base_path is unset, all other paths must be complete
             base_path = project_c['base_path']
-
             # Get default paths to where datalogger tree begins from yaml
             # config,
             # First clean out None values from the default path dict
@@ -192,8 +191,8 @@ class SawyerConfig(object):
             datapaths.update(userpaths)
 
             # Sawyer code path
-            sawyer_py_path = os.path.join(base_path,
-                    project_c['sawyer_py'])
+            #sawyer_py_path = os.path.join(base_path,
+            #        project_c['sawyer_py'])
 
             # Site metadata file
             sitedata_file = os.path.join(base_path,
@@ -227,7 +226,7 @@ class SawyerConfig(object):
             self.defpaths = defpaths
             self.userpaths = userpaths
             self.datapaths = datapaths
-            self.sawyer_py_path = sawyer_py_path
+            #self.sawyer_py_path = sawyer_py_path
             self.sitedata_file = sitedata_file
             self.filename_dt_fmt = filename_dt_fmt
             self.filename_dt_rexp = filename_dt_rexp

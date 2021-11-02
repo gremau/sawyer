@@ -14,6 +14,7 @@ import os
 import shutil
 import re
 import sawyer.config as sy
+sy = sy.conf # Get the conf part of configuration
 from IPython.core.debugger import set_trace
 
 def get_config(path):
@@ -21,7 +22,7 @@ def get_config(path):
     Access the get_config method to change SawyerConfig configs from
     this namespace
     """
-    sy.conf.get_config(path)
+    sy.get_config(path)
 
 def validate_logger(lname):
     """
@@ -31,10 +32,10 @@ def validate_logger(lname):
     Raises:
         ValueError
     """
-    if lname in sy.conf.loggers:
+    if lname in sy.loggers:
         pass
     else:
-        print('Available logger names are {0}'.format(sy.conf.loggers))
+        print('Available logger names are {0}'.format(sy.loggers))
         raise ValueError('Not a valid datalogger name for this configuration')
 
 def get_datadir(lname, datalevel='qa'):
@@ -51,8 +52,8 @@ def get_datadir(lname, datalevel='qa'):
     """
     # Validate logger name, then find or create correct data directory
     validate_logger(lname)
-    if datalevel in sy.conf.datapaths.keys():
-        p = sy.conf.datapaths[datalevel].replace('{LOGGER}', lname)
+    if datalevel in sy.datapaths.keys():
+        p = sy.datapaths[datalevel].replace('{LOGGER}', lname)
         try:
             os.makedirs(p)
             print('New directory created: ' + p)
@@ -61,7 +62,7 @@ def get_datadir(lname, datalevel='qa'):
             pass
     else:
         raise ValueError('Available data levels/directories are {0}'.format(
-            sy.conf.datapaths.keys()))
+            sy.datapaths.keys()))
     return p
 
 def dt_from_filename(filename, rexp=None, fmt=None):
@@ -71,9 +72,9 @@ def dt_from_filename(filename, rexp=None, fmt=None):
     (\d{4}){1}([_-]\d{2}){5}
     """
     if rexp is None:
-        rexp = sy.conf.filename_dt_rexp
+        rexp = sy.filename_dt_rexp
     if fmt is None:
-        fmt = sy.conf.filename_dt_fmt
+        fmt = sy.filename_dt_fmt
     # Regexp search
     srchresult = re.search(rexp, filename)
     if srchresult is None:
@@ -144,7 +145,7 @@ def get_latest_df(lname, datalevel, optmatch=None):
     p = get_datadir(lname, datalevel)
 
     if 'raw' in datalevel:
-        raw_freq = sy.conf.logger_c[lname]['rawfreq']
+        raw_freq = sy.logger_c[lname]['rawfreq']
         fs, f_dt = get_file_list(p, optmatch=optmatch, parsedt=True)
         df = concat_raw_files(fs, optmatch=optmatch, iofunc=load_toa5,
                 reindex=raw_freq)
@@ -155,7 +156,7 @@ def get_latest_df(lname, datalevel, optmatch=None):
     return df, f_dt
 
 
-#def read_project_conf(confdir=sy.conf.spath):
+#def read_project_conf(confdir=sy.spath):
 #    """
 #    Read the project YAML configuration file from the sawyer
 #    configuration directory.
@@ -193,7 +194,7 @@ def read_yaml_conf(lname, yamltype, confdir=None):
                     do not match those found in the yaml file
     """
     if confdir is None:
-        confdir = sy.conf.spath
+        confdir = sy.spath
     if lname is 'all':
         yamlfile = os.path.join(confdir, yamltype + '.yaml')
     else:
@@ -327,7 +328,7 @@ def rename_raw_variables(lname, rawpath, rnpath, confdir=None):
         Does not return anything but writes new files in rnpath
     """
     if confdir is None:
-        confdir = sy.conf.spath
+        confdir = sy.spath
 
     # Get var_rename configuration file for logger
     yamlf = read_yaml_conf(lname, 'var_rename', confdir=confdir)
@@ -373,7 +374,7 @@ def sawyer_out(df, lname, outpath, datestamp=None,
     suffix = suffix.replace("_", "")
 
     if datestamp is not None:
-        datestamp = datestamp.strftime(sy.conf.filename_dt_fmt)
+        datestamp = datestamp.strftime(sy.filename_dt_fmt)
     # Put together the output file name
     strlist = [prefix, lname, datestamp, suffix]
     outfile = os.path.join(outpath,
