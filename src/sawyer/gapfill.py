@@ -18,7 +18,7 @@ class GapfillSource:
     Class to make gapfilling data accessible
     """
 
-    def __init__(self, gapconfs):
+    def __init__(self, dlevel, gapconfs):
         """
         Initialize GapfillSource object.
         """
@@ -28,6 +28,10 @@ class GapfillSource:
                 if 'sources' in gapconfs[k]]
         sourcelist = [item for sublist in sourcelist for item in sublist]
         self.sourcelist = set(sourcelist)
+        for i in self.sourcelist:
+            files = sio.get_file_list(sio.get_datadir(i, datalevel=dlevel))
+            if len(files) < 1:
+                raise ValueError('Data from logger {0} and level {1} is not available to gapfill!'.format(i, dlevel))
         
         if not self.sourcelist:
             print('Gapfilling configuration contains no external sources...')
@@ -36,8 +40,8 @@ class GapfillSource:
             self.sources = {}
             self.externalsource = True
             for s in self.sourcelist:
-                if s in sio.sy.conf.loggers: # Check if datalogger is in project
-                    self.sources[s], _ = sio.get_latest_df(s, 'qa',
+                if s in sio.sy.loggers: # Check if datalogger is in project
+                    self.sources[s], _ = sio.get_latest_df(s, dlevel,
                             optmatch='masked')
                 else: # Eventually check for other sources...
                     raise ValueError('Source not configured for gapfilling!')
@@ -157,7 +161,7 @@ def validate_gf_conf(gapconf, gapcolumns):
         vgapconf[c] = conf
     return vgapconf
 
-def apply_gapfilling(df_in, gapconf, plot=False):
+def apply_gapfilling(df_in, dlevel, gapconf, plot=False):
     """
     Apply gapfilling to a dataframe. The incoming dataframe (df) is copied
     and gaps are filled according to the function and parameters in gapconf.
@@ -177,7 +181,7 @@ def apply_gapfilling(df_in, gapconf, plot=False):
     df = df_in.copy()
     df_isfilled = pd.DataFrame(False, index=df.index, columns=df.columns)
     # Get gapfilling sources object
-    gfsource = GapfillSource(gapconf)
+    gfsource = GapfillSource(dlevel, gapconf)
     # Loop through gapconf
     for k, conf in gapconf.items():        
         # Get the start and end fill dates
@@ -223,13 +227,14 @@ def apply_gapfilling(df_in, gapconf, plot=False):
 
     return df, df_isfilled
 
-def fill_logger(lname, plot=False):
+def fill_logger(lname, dlevel, plot=False):
     """
     Get a gapfilled dataframe for the given logger and a boolean dataframe
     indicating what data is filled.
 
     Args:
         lname (string): datalogger name
+        dlevel (string): data level to gapfill
         plot (bool): if set, make a plot of the gapfilling
     Returns:
         df_gf       : gapfilled dataframe
@@ -238,13 +243,13 @@ def fill_logger(lname, plot=False):
     """
 
     # Get most recent qa masked data file for logger
-    df, filedate = sio.get_latest_df(lname, 'qa', optmatch='masked')
+    df, filedate = sio.get_latest_df(lname, dlevel, optmatch='masked')
     # Get gapfilling configuration
     gapconf = sio.read_yaml_conf(lname, 'gapfill')
     # Validate gapconf
     gapconfv = validate_gf_conf(gapconf, df.columns)
 
     # Fill gaps
-    df_gf, df_isfilled = apply_gapfilling(df, gapconfv, plot=plot)
+    df_gf, df_isfilled = apply_gapfilling(df, dlevel, gapconfv, plot=plot)
     
     return df_gf, df_isfilled, filedate

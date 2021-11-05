@@ -25,6 +25,7 @@ setup(
     packages=find_packages(where='src'),
     install_requires=[
         'ruamel.yaml',
+        'scipy',
         'pandas',
         'matplotlib']
     )

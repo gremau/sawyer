@@ -134,6 +134,10 @@ def get_latest_file(datapath, optmatch=None, fullpath=True):
     """
     files, fdates = get_file_list(datapath, optmatch=optmatch,
             parsedt=True, fullpath=fullpath)
+    if len(files) < 1:
+        warn = "Warning: there are no files matching pattern {0} in {1}"
+        print(warn.format(str(optmatch), datapath))
+    
     return files[fdates.index(max(fdates))], max(fdates)
 
     

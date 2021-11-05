@@ -113,7 +113,10 @@ class SawyerConfig(object):
             self.loggers=[]
             self.logger_c={}
             self.spath=None
+            self.rawpath=''
+            self.deflevels={}
             self.defpaths={}
+            self.userlevels={}
             self.userpaths={}
             self.datapaths={}
             self.sitedata_file=''
@@ -156,40 +159,53 @@ class SawyerConfig(object):
             filename_dt_rexp = project_c['filename_dt_rexp']
 
             # Get valid paths from project_c
+
+            # Base path (if theres a common root)
             # NOTE - If base_path is unset, all other paths must be complete
             base_path = project_c['base_path']
-            # Get default paths to where datalogger tree begins from yaml
-            # config,
-            # First clean out None values from the default path dict
-            defpaths = {k:v for k,v in 
-                    project_c['default_data_paths'].items() 
+
+            # Get raw data path
+            raw_path = os.path.join(base_path, project_c['raw_path'],
+                    '{LOGGER}', 'raw', '')
+
+            # Get sawyer output path
+            sawyer_out_path = project_c['sawyer_out_path']
+
+            # Get the default data levels (clean out None values)
+            deflevels = {k:v for k,v in 
+                    project_c['default_data_levels'].items() 
                     if v is not None}
-            # 'qa' and 'raw_in' are required (key error if missing) and 
-            # the rest are set to match qa path if they are missing
-            for k in project_c['default_data_paths'].keys():
-                if k=='raw_in' or k=='qa':
-                    defpaths[k] = os.path.join(base_path, defpaths[k])
-                else:
-                    defpaths[k] = os.path.join(base_path, 
-                            defpaths.get(k, defpaths['qa']))
 
-            # Complete the user paths dictionary
+            # Identify configured data levels with no description as
+            # undefined, create sawyer_out paths for all levels following
+            # the pattern `base/sawyer_out/loggername/datalevel/` 
+            defpaths = {}
+            for k in project_c['default_data_levels'].keys():
+                deflevels[k] = deflevels.get(k, 'Undefined')
+                defpaths[k] = os.path.join(base_path, sawyer_out_path,
+                        '{LOGGER}', k, '')
+
+            # Get any user-defined data levels (clean out None values)
+            userlevels = {k:v for k,v in 
+                    project_c['user_data_levels'].items() 
+                    if v is not None}
+
+            # Identify configured user data levels with no description as
+            # undefined, create sawyer_out paths for all levels following
+            # the pattern `base/sawyer_out/loggername/datalevel/` 
             userpaths = {}
-            for k, v in project_c['user_subdirs'].items():
-                if os.path.isdir(str(v)):
-                    userpaths[k] = os.path.join(v, '{LOGGER}', k, '')
-                else:
-                    userpaths[k] = os.path.join(defpaths['qa'],
-                            '{LOGGER}', k, '')
+            for k in project_c['user_data_levels'].keys():
+                userlevels[k] = userlevels.get(k, 'Undefined')
+                userpaths[k] = os.path.join(base_path, sawyer_out_path,
+                        '{LOGGER}', k, '')
 
-            # Complete the default paths in a new dictionary
+            # Merge the raw, default and user path dictionaries
             datapaths = {}
-            for k in defpaths.keys():
-                datapaths[k] = os.path.join(defpaths[k], '{LOGGER}', k, '')
-
-            # Merge the  default and user path dictionaries
+            datapaths['raw'] = raw_path
+            datapaths.update(defpaths)
             datapaths.update(userpaths)
 
+            # TODO - change this to get sawyer version
             # Sawyer code path
             #sawyer_py_path = os.path.join(base_path,
             #        project_c['sawyer_py'])
@@ -205,10 +221,10 @@ class SawyerConfig(object):
                 self.import_uplots=True
                 import sys
                 sys.path.append(spath)
-            
+
             # Print available data subdirectories for user:
             datadirs = list(datapaths.keys())
-            print(tcol.OKGREEN + '{0} data levels/directories available '
+            print(tcol.OKGREEN + '{0} data levels available '
                     'per logger: '.format(len(datadirs)) +
                     tcol.ENDC + '\n  {0}\n'.format(', '.join(datadirs)) +
                     tcol.OKGREEN + 'Use ' + tcol.ENDC + tcol.UNDERLINE +
@@ -223,7 +239,10 @@ class SawyerConfig(object):
             self.loggers = loggers
             self.logger_c = logger_c
             self.spath = spath
+            self.rawpath = raw_path
+            self.deflevels = deflevels
             self.defpaths = defpaths
+            self.userlevels = userlevels
             self.userpaths = userpaths
             self.datapaths = datapaths
             #self.sawyer_py_path = sawyer_py_path
