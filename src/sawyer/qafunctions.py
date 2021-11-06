@@ -1,5 +1,4 @@
-"""
-Functions that can be called to qa a dataframe, either marking data for 
+"""Functions that can be called to qa a dataframe, either marking data for 
 removal, or transforming values in some way (unit conversions, calibration 
 corrections, etc.). These are generally called from the apply_qa_flags 
 function in the flag module. Functions must return a  dataframe (often the 
@@ -8,17 +7,48 @@ qa flag points to, and a boolean value indicating whether the flagged data
 should be masked (True = flag for removal).
 
 TODO - note what should be in args and kwargs of yaml config file
-"""
 
+    Returns
+    -------
+    [type]
+        [description]
+
+    Raises
+    ------
+    ValueError
+        [description]
+    ValueError
+        [description]
+    ValueError
+        [description]
+    ValueError
+        [description]
+    """
 import pandas as pd
 import numpy as np
 import pdb
 
 nancval = ['NAN', 'NaN', 'Nan', 'nan']
 
+
 def scale_by_multiplier(df, idxrange, colrange, multiplier, **kwargs):
-    """
-    Scale all values in indicated row and column range by the multiplier
+    """Scale values in given dataframe ranges by a multiplier
+
+    Parameters
+    ----------
+    df : [type]
+        [description]
+    idxrange : [type]
+        [description]
+    colrange : [type]
+        [description]
+    multiplier : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
     """
     mask = pd.DataFrame(False, index=df.index, columns=df.columns)
     mask.loc[idxrange, colrange] = True
@@ -26,20 +56,55 @@ def scale_by_multiplier(df, idxrange, colrange, multiplier, **kwargs):
     return [df, mask, False]
 
 def mask_by_datetime(df, idxrange, colrange, **kwargs):
-    """
-    Mask all matching idxrange and colrange
+    """Mask all matching idxrange and colrange
+
+    Parameters
+    ----------
+    df : [type]
+        [description]
+    idxrange : [type]
+        [description]
+    colrange : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
     """
     mask = pd.DataFrame(False, index=df.index, columns=df.columns)
     mask.loc[idxrange, colrange] = True
     return [df, mask, True]
 
 def mask_by_comparison(df, idxrange, colrange, comparison, cval, **kwargs):
-    """
-    For each column in colrange, mask values that match the idxrange and 
+    """For each column in colrange, mask values that match the idxrange and 
     that meet the comparison criteria. In the comparison statement, column
     values may be screened for being above, below, or equaling a value. They
     may also be screened for being NaN values (using "equals" and one of the
     values in nancval).
+
+    Parameters
+    ----------
+    df : [type]
+        [description]
+    idxrange : [type]
+        [description]
+    colrange : [type]
+        [description]
+    comparison : [type]
+        [description]
+    cval : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+
+    Raises
+    ------
+    ValueError
+        [description]
     """
     if cval in nancval:
         comparison = 'isnan'
@@ -62,14 +127,37 @@ def mask_by_comparison(df, idxrange, colrange, comparison, cval, **kwargs):
 
 def mask_by_comparison_ind(df, idxrange, colrange, indvar,
         comparison, cval, **kwargs):
-    """
-    Mask all values that match the idxrange and colrange specified and that
+    """Mask all values that match the idxrange and colrange specified and that
     that meet the comparison criteria between the "indvar" column and cval.
     In the comparison statement, column values may be screened where "indvar"
     column is above, below, or equal to cval. They may also be screened 
     where "indvar" contains NaN values (using "equals" and one of the values
     in nancval).
 
+    Parameters
+    ----------
+    df : [type]
+        [description]
+    idxrange : [type]
+        [description]
+    colrange : [type]
+        [description]
+    indvar : [type]
+        [description]
+    comparison : [type]
+        [description]
+    cval : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+
+    Raises
+    ------
+    ValueError
+        [description]
     """
     if cval in nancval:
         comparison = 'isnan'
@@ -90,23 +178,39 @@ def mask_by_comparison_ind(df, idxrange, colrange, indvar,
 
 def mask_by_rolling_stat(df, idxrange, colrange, indvar, stat,
         window, comparison, thresh=0, **kwargs):
-    """
-    Mask values in matching idxrange and colrange AND where an independent
+    """    Mask values in matching idxrange and colrange AND where an independent
     variable (indvar) is above/below cval 
 
-    Args:
-        df (dataframe): a pandas dataframe containing datalogger data
-        idxrange (boolean): rows of df to apply this function
-        colrange (boolean): columns of df to apply this function
-        indvar (string): variable name to apply moving statistic to
-        stat (string): statistic to apply to indvar ('mean','median','stdv')
-        window (int or string): moving window size (int or time, ie. '30min')
-        comparison (string): comparison to make to calculated statistic
-        thresh (float): threshold for comparison (compare to stat_ts +/- thresh)
-    Returns:
-        df: dataframe (unchanged)
-        mask: dataframe listing data removals (1 for remove)
-        bool: True for remove data
+    Parameters
+    ----------
+    df : pandas dataframe
+        a pandas dataframe containing datalogger data
+    idxrange : boolean array
+        rows of df to apply this function
+    colrange : boolean array
+        columns of df to apply this function
+    indvar : string
+        variable name to apply moving statistic to
+    stat : string
+        statistic to apply to indvar ('mean','median','std')
+    window : int or string
+        moving window size (int or time, ie. '30min')
+    comparison : string
+        comparison to make to calculated statistic
+    thresh : float, optional
+        threshold for comparison (compare to stat_ts +/- thresh), by default 0
+
+    Returns
+    -------
+    [type]
+        [description]
+
+    Raises
+    ------
+    ValueError
+        [description]
+    ValueError
+        [description]
     """
     mask = pd.DataFrame(False, index=df.index, columns=df.columns)    
     
@@ -117,8 +221,8 @@ def mask_by_rolling_stat(df, idxrange, colrange, indvar, stat,
     elif stat=='median':
         stat_ts = df[indvar].rolling(window,
                 center=True, min_periods=window-1).median()
-    elif stat=='stdv':
-        raise ValueError('This STDDEV filter is not working yet!!!')
+    elif stat=='std':
+        #raise ValueError('This STDDEV filter is not working yet!!!')
         stat_ts = df[indvar].rolling(window,
                 center=True, min_periods=window-1).std()
     else:

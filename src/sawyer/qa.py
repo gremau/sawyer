@@ -13,8 +13,18 @@ import sawyer.dtools as tools
 from IPython.core.debugger import set_trace
 
 def get_qafunction(flag):
-    """
-    Get the qa function and its arguments
+    """Get the qa function and its arguments
+
+    Arguments
+    ---------
+    flag : dict
+           Dictionary containing a qa flag definition, usually derived from
+           a sawyer yaml qa configuration file
+
+    Returns
+    -------
+    A list containing a function, function arguments, and a kwargs dict
+              
     """
     args = (); kwargs = {}
     if 'qa_function' in flag:
@@ -29,8 +39,9 @@ def get_qafunction(flag):
     return [outfunc, args, kwargs]
 
 def apply_qa_flags(df, flags):
-    """
-    Apply qa flags to a dataframe. There are two types of operations that can
+    """Apply qa flags to a dataframe. 
+    
+    There are two types of operations that can
     be performed on the input dataframe, depending on the QA flag:
 
     1. Transform data values based on qa flag input
@@ -39,10 +50,12 @@ def apply_qa_flags(df, flags):
     These changes are logged in the flag array (df_flag) with a number
     corresponding to the qa flag in the site configuration files.
 
-    Args:
+    Arguments
+    ---------
         df      : input dataframe
         flags   : qa_flag dictionary from the site's sawyer configuration dir
-    Returns:
+    Returns
+    -------
         Three pandas dataframes with identical dimensions to the input df
         df_new  : original data with any qa transformations applied
         df_mask : Mask dataframe containing boolean values (True = remove)
@@ -50,7 +63,7 @@ def apply_qa_flags(df, flags):
 
     TODO - may want to add a flag for data already missing
     """
-    # Make a copy to be a qa'd dataframe, aboolean array, and a flag dataframe
+    # Make a copy to be a qa'd dataframe, a boolean array, and a flag dataframe
     df_new = df.copy()
     df_mask = pd.DataFrame(False, index=df.index, columns=df.columns)
     df_flag = pd.DataFrame(0, index=df.index, columns=df.columns)
@@ -87,19 +100,23 @@ def apply_qa_flags(df, flags):
     return df_new, df_mask, df_flag # df_new[df_mask]=np.nan will apply mask
 
 def qa_logger(lname, df_corr=None, use_global=True):
-    """
-    Get qa dataframes with flags appended and values masked for the specified
-    datalogger
+    """Get filtered dataframes with flags appended and values masked
+    for a datalogger
 
-    Args:
-        lname (string): datalogger name
-        df_corr (pandas dataframe): apply qa flags to this, usually corrected df
-        use_global (bool): if set, use the global qa flags for the project
-    Returns:
-        df_qa       : QA'd dataframe
-        df_qa_masked: QA'd dataframe with mask applied
-        df_flag     : dataframe indicating which flags and where applied
-        filedate    : datetime object indicating last date of data collection
+    Arguments
+    ---------
+        lname : string
+                datalogger name
+        df_corr : pandas dataframe
+                apply qa flags to this, usually corrected df
+        use_global : bool
+                if set, use the global qa flags for the project
+    Returns
+    -------
+        df_qa        : QA'd dataframe
+        df_qa_masked : QA'd dataframe with mask applied
+        df_flag      : dataframe indicating which flags and where applied
+        filedate     : datetime object indicating last date of data collection
     """
     # Load the dataframe or use a corrected dataframe if provided
     if df_corr is not None:
