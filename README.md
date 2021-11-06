@@ -99,10 +99,10 @@ some [sensible conventions](
 https://ameriflux.lbl.gov/data/aboutdata/data-variables/) for flux sites that
 suggest using the pattern `VARTYPE_H_V_R`, where
 
-    * VARTYPE is the variable/sensor identifier (AirTC, CO2sensor, etc)
-    * H is the horizontal position (1, 2, 3 in an arbitrary number scheme, or a distance/direction)
-    * V is the vertical position (depth or height)
-    * R is the replicate number (optional)
+ * VARTYPE is the variable/sensor identifier (AirTC, CO2sensor, etc)
+ * H is the horizontal position (1, 2, 3 in an arbitrary number scheme, or a distance/direction)
+ * V is the vertical position (depth or height)
+ * R is the replicate number (optional)
 
 If data logger programming changes, the name of a variable in the resulting
 data file might change even though the underlying data stream or source hasn't.
@@ -125,17 +125,17 @@ working directory. This directory contains several global configuration files
 and a subdirectory with configuration files for each data logger in the project.
 All loggers have a unique name `lname`. Configurations include:
 
-    - `project.yaml`: defines project information, data source location, 
+ * `project.yaml`: defines project information, data source location, 
     data processing levels, and output locations.
-    - `loggers.yaml`: defines a set of loggers, each with a unique name
+ * `loggers.yaml`: defines a set of loggers, each with a unique name
     `lname`, that are collecting the data
-    - `qa_flags.yaml`: defines data flagging and filtering steps for all
+ * `qa_flags.yaml`: defines data flagging and filtering steps for all
     loggers.
-    - `{lname}/var_rename.yaml`: defines changes in column variable names over
+ * `{lname}/var_rename.yaml`: defines changes in column variable names over
     time in case sensors/data streams are renamed at logger `lname`.
-    - `{lname}/qa_flags.yaml`: defines data flagging and filtering steps for
+ * `{lname}/qa_flags.yaml`: defines data flagging and filtering steps for
     logger `lname`.
-    - `{lname}/gafill.yaml`: defines data gapfilling steps for logger `lname`.
+ * `{lname}/gafill.yaml`: defines data gapfilling steps for logger `lname`.
 
 ## Licensing
 
