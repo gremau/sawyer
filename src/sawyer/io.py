@@ -286,9 +286,9 @@ def concat_raw_files(files, iofunc=load_toa5, optmatch=None, reindex=None):
     for i in files:
         # Call load_toa5_file
         filedf = iofunc(i)
-        # And append to ldf, 'verify_integrity' warns if there are
+        # And concatenate to ldf, 'verify_integrity' warns if there are
         # duplicate indices
-        ldf = ldf.append(filedf, verify_integrity=True)
+        ldf = pd.concat([ldf, filedf], verify_integrity=True)
     # Either reindex (if requested) or order by index
     if reindex is not None:
         ldf = reindex_to(ldf, reindex)
