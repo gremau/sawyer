@@ -253,7 +253,8 @@ def load_toa5(fdatapath, **kwargs) :
 
     # Parse using Campbell timestamp
     parsed_df = pd.read_csv(fdatapath, skiprows=skip, header=0,
-            parse_dates = { 'Date': [0]}, index_col='Date',
+            index_col='TIMESTAMP',
+            parse_dates = True,
             na_values=['NaN', 'NAN', 'INF', '-INF'], **kwargs)
     
     return parsed_df
