@@ -17,7 +17,7 @@ setup(
     name='sawyer',
     description='Manage data workflows and build processing pipelines for data loggers and environmental sensor networks',
     long_description=long_description,
-    version='2021.1b2',
+    version='2024.1a',
     url='https://github.com/gremau/sawyer',  # Optional
     author='Gregory E. Maurer',  # Optional
     author_email='gmaurer@nmsu.edu',  # Optional

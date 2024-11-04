@@ -176,7 +176,74 @@ def mask_by_comparison_ind(df, idxrange, colrange, indvar,
     mask.loc[idxrange_thv, colrange] = True
     return [df, mask, True]
 
-def mask_by_rolling_stat(df, idxrange, colrange, indvar, stat,
+
+def mask_by_rolling_stat(df, idxrange, colrange, stat,
+        window, comparison, thresh=0, **kwargs):
+    """    Mask values in matching idxrange and colrange AND where an independent
+    variable (indvar) is above/below cval 
+
+    Parameters
+    ----------
+    df : pandas dataframe
+        a pandas dataframe containing datalogger data
+    idxrange : boolean array
+        rows of df to apply this function
+    colrange : boolean array
+        columns of df to apply this function
+    stat : string
+        statistic to apply to indvar ('mean','median','std')
+    window : int or string
+        moving window size (int or time, ie. '30min')
+    comparison : string
+        comparison to make to calculated statistic
+    thresh : float, optional
+        threshold for comparison (compare to stat_ts +/- thresh), by default 0
+
+    Returns
+    -------
+    [type]
+        [description]
+
+    Raises
+    ------
+    ValueError
+        [description]
+    ValueError
+        [description]
+    """
+    mask = pd.DataFrame(False, index=df.index, columns=df.columns)    
+    
+    # Calculate the time series statistic
+    if stat=='mean':
+        stat_ts = df.rolling(window,
+                center=True, min_periods=window-1).mean()
+    elif stat=='median':
+        stat_ts = df.rolling(window,
+                center=True, min_periods=window-1).median()
+    elif stat=='std':
+        #raise ValueError('This STDDEV filter is not working yet!!!')
+        stat_ts = df.rolling(window,
+                center=True, min_periods=window-1).std()
+    else:
+        raise ValueError('Invalid statistic (mean, median, stdv)')
+    
+    # Compare the data to stat_ts and flag
+    for c in colrange:
+        if comparison=='above':
+            idxrange_th = np.logical_and(idxrange, df[c] > stat_ts[c] + thresh)
+        elif comparison=='below':
+            idxrange_th = np.logical_and(idxrange, df[c] < stat_ts[c] - thresh)
+        elif comparison=='equals':
+            idxrange_th = np.logical_and(idxrange, df[c] == stat_ts[c])
+        else:
+            raise ValueError('Invalid comparison (above, below, equals)')
+        # Add the masked column to the dataframe mask
+        mask.loc[idxrange_th, c] = True
+    
+    return [df, mask, True]
+
+
+def mask_by_rolling_stat_ind(df, idxrange, colrange, indvar, stat,
         window, comparison, thresh=0, **kwargs):
     """    Mask values in matching idxrange and colrange AND where an independent
     variable (indvar) is above/below cval 
@@ -237,5 +304,39 @@ def mask_by_rolling_stat(df, idxrange, colrange, indvar, stat,
         idxrange_thv = np.logical_and(idxrange, df[indvar] == stat_ts)
     else:
         raise ValueError('Invalid comparison (above, below, equals)')
+    
+    # Set the mask
     mask.loc[idxrange_thv, colrange] = True
     return [df, mask, True]
+
+
+def switch_values(df_in, idxrange, colrange, **kwargs):
+    """Scale values in given dataframe ranges by a multiplier
+
+    Parameters
+    ----------
+    df : [type]
+        [description]
+    idxrange : [type]
+        [description]
+    col1 : [type]
+        [description]
+    col2 : [type]
+        [description]
+
+    Returns
+    -------
+    [type]
+        [description]
+    """
+    df_new = df_in.copy()
+    mask = pd.DataFrame(False, index=df_new.index, columns=df_new.columns)
+    col1 = colrange[0]
+    col2 = colrange[1]
+    #mask.loc[idxrange, [col1, col2]] = True
+    rep1 = df_new.loc[idxrange, col1].values
+    rep2 = df_new.loc[idxrange, col2].values
+    df_new.loc[idxrange, col1] = rep2
+    df_new.loc[idxrange, col2] = rep1
+    #df[idxrange] = df[mask] * multiplier
+    return [df_new, mask, False]
